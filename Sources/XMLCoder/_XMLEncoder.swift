@@ -21,7 +21,7 @@ class _XMLEncoder: Encoder {
     var userInfo: [CodingUserInfoKey : Any] = [:]
     
     func topElement(withName name: String) -> XMLElement {
-        return XMLNode.element(withName: name, children: topElements?.nodes ?? [], attributes: nil) as! XMLElement
+        return XMLNode.element(withName: name, children: topElements?.nodes ?? [], attributes: topElements?.attributes ?? []) as! XMLElement
     }
     
     var topElements: XMLEncodingContainer?
