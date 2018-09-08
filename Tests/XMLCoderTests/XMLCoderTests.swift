@@ -1,6 +1,16 @@
 import XCTest
 @testable import XMLCoder
 
+extension String {
+    func substringWithXMLTag(_ tag: String) -> Substring? {
+        let start = "<\(tag)"
+        let end = "</\(tag)>"
+        guard let startRange = self.range(of: start) else { return nil }
+        guard let endRange = self.range(of: end) else { return nil }
+        return self[startRange.lowerBound..<endRange.upperBound]
+    }
+}
+
 final class XMLCoderTests: XCTestCase {
     func testEncodeBasicXML() {
 		struct TestStruct: Encodable {
@@ -32,18 +42,17 @@ final class XMLCoderTests: XCTestCase {
         </root>
         """
         
-        XCTAssertEqual(result, expected)
+        XCTAssertEqual(result?.substringWithXMLTag("root"), expected.substringWithXMLTag("root"))
     }
     
     func testWhitespace() throws {
         let initialString = """
-        <?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\
-        <whitespace xml:space="collapse">   a   b   c
+        <whitespace xml:space="preserve">   a   b   c
         d   e   f   </whitespace>
         """
         let xml = try XMLDocument(xmlString: initialString)
         let finalString = String(data: xml.xmlData, encoding: .utf8)
-        XCTAssertEqual(initialString, finalString)
+        XCTAssertEqual(initialString.substringWithXMLTag("whitespace"), finalString?.substringWithXMLTag("whitespace"))
     }
 
 
