@@ -64,7 +64,7 @@ final class XMLCoderTests: XCTestCase {
             var attribute: CodableXMLAttribute
         }
         
-        let value = EnclosingStruct(container: AttributesStruct(element: "elem", attribute: CodableXMLAttribute("attr")))
+        let value = EnclosingStruct(container: AttributesStruct(element: "elem", attribute: "attr"))
         let encoder = XMLEncoder()
         let xml = try! encoder.encode(value)
         let result = String(data: xml.xmlData, encoding: .utf8)

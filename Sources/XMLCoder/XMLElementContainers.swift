@@ -28,9 +28,12 @@ class SingleXMLElementContainer: XMLEncodingContainer {
     var attributes: [XMLNode] = []
 }
 
-struct CodableXMLAttribute: Encodable {
+struct CodableXMLAttribute: Encodable, ExpressibleByStringLiteral {
+    typealias StringLiteralType = String
+    
     let value: String
-    init(_ value: String) {
-        self.value = value
+    
+    init(stringLiteral: StringLiteralType) {
+        self.value = stringLiteral
     }
 }
