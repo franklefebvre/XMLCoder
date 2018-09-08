@@ -54,10 +54,32 @@ final class XMLCoderTests: XCTestCase {
         let finalString = String(data: xml.xmlData, encoding: .utf8)
         XCTAssertEqual(initialString.substringWithXMLTag("whitespace"), finalString?.substringWithXMLTag("whitespace"))
     }
+    
+    func testAttributes() {
+        struct EnclosingStruct: Encodable {
+            var container: AttributesStruct
+        }
+        struct AttributesStruct: Encodable {
+            var element: String
+            var attribute: CodableXMLAttribute
+        }
+        
+        let value = EnclosingStruct(container: AttributesStruct(element: "elem", attribute: CodableXMLAttribute("attr")))
+        let encoder = XMLEncoder()
+        let xml = try! encoder.encode(value)
+        let result = String(data: xml.xmlData, encoding: .utf8)
+        
+        let expected = """
+        <root><container attribute="attr"><element>elem</element></container></root>
+        """
+        
+        XCTAssertEqual(result?.substringWithXMLTag("root"), expected.substringWithXMLTag("root"))
+    }
 
 
     static var allTests = [
         ("testEncodeBasicXML", testEncodeBasicXML),
         ("testWhitespace", testWhitespace),
+        ("testAttributes", testAttributes),
     ]
 }

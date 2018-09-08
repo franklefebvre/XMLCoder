@@ -133,9 +133,14 @@ class _XMLEncoder: Encoder {
         }
         
         mutating func encode<T>(_ value: T, forKey key: Key) throws where T : Encodable {
+            if let attribute = value as? CodableXMLAttribute {
+                let attributeNode = XMLNode.attribute(withName: _converted(key).stringValue, stringValue: attribute.value) as! XMLNode
+                self.container.attributes.append(attributeNode)
+                return
+            }
             let childEncoder = _XMLEncoder(options: encoder.options)
             try value.encode(to: childEncoder)
-            let element = XMLNode.element(withName:_converted(key).stringValue, children: childEncoder.topElements?.nodes, attributes: nil) as! XMLElement // box(value)
+            let element = XMLNode.element(withName:_converted(key).stringValue, children: childEncoder.topElements?.nodes, attributes: childEncoder.topElements?.attributes) as! XMLElement // box(value)
             self.container.nodes.append(element)
         }
         
