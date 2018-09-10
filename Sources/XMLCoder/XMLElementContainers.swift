@@ -37,3 +37,13 @@ struct CodableXMLAttribute: Encodable, ExpressibleByStringLiteral {
         self.value = stringLiteral
     }
 }
+
+struct CodableXMLInlineText: Encodable, ExpressibleByStringLiteral {
+    typealias StringLiteralType = String
+    
+    let value: String
+    
+    init(stringLiteral: StringLiteralType) {
+        self.value = stringLiteral
+    }
+}

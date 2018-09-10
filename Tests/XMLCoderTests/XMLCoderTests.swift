@@ -63,15 +63,16 @@ final class XMLCoderTests: XCTestCase {
         struct AttributesStruct: Encodable {
             var element: String
             var attribute: CodableXMLAttribute
+            var inlineText: CodableXMLInlineText
         }
         
-        let value = EnclosingStruct(container: AttributesStruct(element: "elem", attribute: "attr"), top_attribute: "top")
+        let value = EnclosingStruct(container: AttributesStruct(element: "elem", attribute: "attr", inlineText: "text"), top_attribute: "top")
         let encoder = XMLEncoder()
         let xml = try! encoder.encode(value)
         let result = String(data: xml.xmlData, encoding: .utf8)
         
         let expected = """
-        <root top_attribute="top"><container attribute="attr"><element>elem</element></container></root>
+        <root top_attribute="top"><container attribute="attr"><element>elem</element>text</container></root>
         """
         
         XCTAssertEqual(result?.substringWithXMLTag("root"), expected.substringWithXMLTag("root"))
