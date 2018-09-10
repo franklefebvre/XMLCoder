@@ -21,7 +21,7 @@ class _XMLEncoder: Encoder {
     var userInfo: [CodingUserInfoKey : Any] = [:]
     
     func topElement(withName name: String) -> XMLElement {
-        return XMLNode.element(withName: name, children: topElements?.nodes ?? [], attributes: nil) as! XMLElement
+        return XMLNode.element(withName: name, children: topElements?.nodes ?? [], attributes: topElements?.attributes ?? []) as! XMLElement
     }
     
     var topElements: XMLEncodingContainer?
@@ -133,9 +133,19 @@ class _XMLEncoder: Encoder {
         }
         
         mutating func encode<T>(_ value: T, forKey key: Key) throws where T : Encodable {
+            if let attribute = value as? CodableXMLAttribute {
+                let attributeNode = XMLNode.attribute(withName: _converted(key).stringValue, stringValue: attribute.value) as! XMLNode
+                self.container.attributes.append(attributeNode)
+                return
+            }
+            if let inlineText = value as? CodableXMLInlineText {
+                let textNode = XMLNode.text(withStringValue: inlineText.value) as! XMLNode
+                self.container.nodes.append(textNode)
+                return
+            }
             let childEncoder = _XMLEncoder(options: encoder.options)
             try value.encode(to: childEncoder)
-            let element = XMLNode.element(withName:_converted(key).stringValue, children: childEncoder.topElements?.nodes, attributes: nil) as! XMLElement // box(value)
+            let element = XMLNode.element(withName:_converted(key).stringValue, children: childEncoder.topElements?.nodes, attributes: childEncoder.topElements?.attributes) as! XMLElement // box(value)
             self.container.nodes.append(element)
         }
         
