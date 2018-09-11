@@ -28,7 +28,7 @@ class SingleXMLElementContainer: XMLEncodingContainer {
     var attributes: [XMLNode] = []
 }
 
-struct CodableXMLAttribute: Encodable, ExpressibleByStringLiteral {
+struct CodableXMLString<T>: Encodable, ExpressibleByStringLiteral {
     typealias StringLiteralType = String
     
     let value: String
@@ -38,12 +38,8 @@ struct CodableXMLAttribute: Encodable, ExpressibleByStringLiteral {
     }
 }
 
-struct CodableXMLInlineText: Encodable, ExpressibleByStringLiteral {
-    typealias StringLiteralType = String
-    
-    let value: String
-    
-    init(stringLiteral: StringLiteralType) {
-        self.value = stringLiteral
-    }
-}
+enum InlineTextType {}
+enum AttributeType {}
+
+typealias CodableXMLInlineText = CodableXMLString<InlineTextType>
+typealias CodableXMLAttribute = CodableXMLString<AttributeType>
