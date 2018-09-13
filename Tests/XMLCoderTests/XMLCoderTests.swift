@@ -1,16 +1,6 @@
 import XCTest
 @testable import XMLCoder
 
-extension String {
-    func substringWithXMLTag(_ tag: String) -> Substring? {
-        let start = "<\(tag)"
-        let end = "</\(tag)>"
-        guard let startRange = self.range(of: start) else { return nil }
-        guard let endRange = self.range(of: end) else { return nil }
-        return self[startRange.lowerBound..<endRange.upperBound]
-    }
-}
-
 final class XMLCoderTests: XCTestCase {
     func testEncodeBasicXML() {
 		struct TestStruct: Encodable {
@@ -45,16 +35,6 @@ final class XMLCoderTests: XCTestCase {
         XCTAssertEqual(result?.substringWithXMLTag("root"), expected.substringWithXMLTag("root"))
     }
     
-    func testWhitespace() throws {
-        let initialString = """
-        <whitespace xml:space="preserve">   a   b   c
-        d   e   f   </whitespace>
-        """
-        let xml = try XMLDocument(xmlString: initialString)
-        let finalString = String(data: xml.xmlData, encoding: .utf8)
-        XCTAssertEqual(initialString.substringWithXMLTag("whitespace"), finalString?.substringWithXMLTag("whitespace"))
-    }
-    
     func testAttributes() {
         struct EnclosingStruct: Encodable {
             var container: AttributesStruct
@@ -77,11 +57,33 @@ final class XMLCoderTests: XCTestCase {
         
         XCTAssertEqual(result?.substringWithXMLTag("root"), expected.substringWithXMLTag("root"))
     }
+    
+    func testNamespaces() {
+        struct TestStruct: Encodable /*, FullyQualifiedCodable */ {
+            var string_element: String
+            
+            private enum CodingKeys: CodingKey, QualifiedCodingKey, String {
+                case string_element = "string"
+                
+                var namespace: String? { get {
+                    switch(self) {
+                    case .string_element:
+                        return "http://some.url.example.com/whatever"
+                    }
+                }}
+            }
+        }
+        
+        let value = TestStruct(string_element: "test")
+        let encoder = XMLEncoder()
+        let xml = try! encoder.encode(value)
+        let result = String(data: xml.xmlData, encoding: .utf8)
+    }
 
 
     static var allTests = [
         ("testEncodeBasicXML", testEncodeBasicXML),
-        ("testWhitespace", testWhitespace),
         ("testAttributes", testAttributes),
+        ("testNamespaces", testNamespaces),
     ]
 }
