@@ -49,6 +49,12 @@ final class XMLTests: XCTestCase {
         let rootElement = xml.rootElement()
         let rootNamespaces = rootElement?.namespaces ?? []
         XCTAssertEqual(rootNamespaces.count, 2)
+        let ns0 = rootNamespaces[0]
+        XCTAssertEqual(ns0.name, "")
+        XCTAssertEqual(ns0.stringValue, "http://namespace.example.com/ns/default")
+        let ns1 = rootNamespaces[1]
+        XCTAssertEqual(ns1.name, "ns1")
+        XCTAssertEqual(ns1.stringValue, "http://namespace.example.com/ns/1")
     }
     
     static var allTests = [

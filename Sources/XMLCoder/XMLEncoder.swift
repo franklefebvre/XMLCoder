@@ -118,9 +118,11 @@ open class XMLEncoder {
     /// - throws: `EncodingError.invalidValue` if a non-conforming floating-point value is encountered during encoding, and the encoding strategy is `.throw`.
     /// - throws: An error if any value throws an error during encoding.
     open func encode<T : Encodable>(_ value: T) throws -> XMLDocument {
-        let encoder = _XMLEncoder(options: self.options)
+        let namespaceProvider = XMLNamespaceProvider() // TODO: set default namespace
+        let encoder = _XMLEncoder(options: self.options, namespaceProvider: namespaceProvider)
         try value.encode(to: encoder)
         let element = encoder.topElement(withName: "root")
+        element.addNamespaces(from: namespaceProvider)
         let document = XMLNode.document(withRootElement:element) as! XMLDocument
         return document
     }

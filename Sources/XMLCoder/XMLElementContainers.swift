@@ -43,3 +43,7 @@ enum AttributeType {}
 
 typealias CodableXMLInlineText = CodableXMLString<InlineTextType>
 typealias CodableXMLAttribute = CodableXMLString<AttributeType>
+
+protocol XMLQualifiedKey {
+    var namespace: String? { get }
+}

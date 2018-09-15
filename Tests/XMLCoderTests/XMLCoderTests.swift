@@ -59,27 +59,40 @@ final class XMLCoderTests: XCTestCase {
     }
     
     func testNamespaces() {
-        struct TestStruct: Encodable /*, FullyQualifiedCodable */ {
-            var string_element: String
+        struct TestStruct: Encodable {
+            var with_namespace: String
+            var without_namespace: String
             
-            private enum CodingKeys: CodingKey, QualifiedCodingKey, String {
-                case string_element = "string"
+            private enum CodingKeys: CodingKey, String, XMLQualifiedKey {
+                case with_namespace
+                case without_namespace
                 
                 var namespace: String? { get {
                     switch(self) {
-                    case .string_element:
+                    case .with_namespace:
                         return "http://some.url.example.com/whatever"
+                    default:
+                        return nil
                     }
                 }}
             }
+            // extension declaration wouldn't work here (not file scope).
         }
         
-        let value = TestStruct(string_element: "test")
+        let value = TestStruct(with_namespace: "test1", without_namespace: "test2")
         let encoder = XMLEncoder()
         let xml = try! encoder.encode(value)
         let result = String(data: xml.xmlData, encoding: .utf8)
+        
+        let expected = """
+        <root xmlns:ns1="http://some.url.example.com/whatever">\
+        <ns1:with_namespace>test1</ns1:with_namespace>\
+        <without_namespace>test2</without_namespace>\
+        </root>
+        """
+        
+        XCTAssertEqual(result?.substringWithXMLTag("root"), expected.substringWithXMLTag("root"))
     }
-
 
     static var allTests = [
         ("testEncodeBasicXML", testEncodeBasicXML),
