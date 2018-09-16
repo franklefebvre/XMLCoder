@@ -12,11 +12,13 @@ final class XMLNamespaceProvider {
     var defaultURI: String?
     var mapping: [String: String] // key: URI, value: name
     var names: Set<String>
-    let prefix = "ns"
+    let prefix: String
     
-    init() {
-        self.mapping = [:]
-        self.names = []
+    init(defaultURI: String? = nil, initialMapping: [String: String] = [:], namePrefix: String = "ns") {
+        self.defaultURI = defaultURI
+        self.mapping = initialMapping
+        self.names = Set(initialMapping.values)
+        self.prefix = namePrefix
     }
     
     func name(for uri: String) -> String? {
