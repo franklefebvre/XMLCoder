@@ -21,9 +21,8 @@ final class XMLTests: XCTestCase {
     
     func testCreateNamespaces() {
         let element = XMLNode.element(withName: "element") as! XMLElement
-        let defaultNamespace = XMLNode.namespace(withName: "", stringValue: "http://namespace.example.com/ns/default") as! XMLNode
-        let namespace = XMLNode.namespace(withName: "ns1", stringValue: "http://namespace.example.com/ns/1") as! XMLNode
-        element.namespaces = [defaultNamespace, namespace]
+        element.addNamespace(withName: "", stringValue: "http://namespace.example.com/ns/default")
+        element.addNamespace(withName: "ns1", stringValue: "http://namespace.example.com/ns/1")
         let embedded = XMLNode.element(withName: "ns1:embedded") as! XMLElement
         element.addChild(embedded)
         let xml = XMLDocument(rootElement: element)
@@ -50,7 +49,7 @@ final class XMLTests: XCTestCase {
         let rootNamespaces = rootElement?.namespaces ?? []
         XCTAssertEqual(rootNamespaces.count, 2)
         let ns0 = rootNamespaces[0]
-        XCTAssertEqual(ns0.name, "")
+        XCTAssertEqual(ns0.name ?? "", "") // macOS: "", Linux: nil
         XCTAssertEqual(ns0.stringValue, "http://namespace.example.com/ns/default")
         let ns1 = rootNamespaces[1]
         XCTAssertEqual(ns1.name, "ns1")

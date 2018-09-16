@@ -46,15 +46,28 @@ final class XMLNamespaceProvider {
 
 extension XMLElement {
     func addNamespaces(from provider: XMLNamespaceProvider) {
-        var namespaces: [XMLNode] = []
         if let defaultNamespaceURI = provider.defaultURI {
-            let namespaceNode = XMLNode.namespace(withName: "", stringValue: defaultNamespaceURI) as! XMLNode
-            namespaces.append(namespaceNode)
+            self.addNamespace(withName: "", stringValue: defaultNamespaceURI)
         }
         for (namespaceURI, namespaceName) in provider.mapping {
-            let namespaceNode = XMLNode.namespace(withName: namespaceName, stringValue: namespaceURI) as! XMLNode
-            namespaces.append(namespaceNode)
+            self.addNamespace(withName: namespaceName, stringValue: namespaceURI)
         }
-        self.namespaces = namespaces
+    }
+    
+    func addNamespace(withName namespaceName: String, stringValue: String) {
+        #if os(Linux)
+        let attributeName: String
+        if name == "" {
+            attributeName = "xmlns"
+        }
+        else {
+            attributeName = "xmlns:\(name)"
+        }
+        let attributeNode = XMLNode.attribute(withName: attributeName, stringValue: stringValue) as! XMLNode
+        self.addAttribute(attributeNode)
+        #else
+        let namespaceNode = XMLNode.namespace(withName: namespaceName, stringValue: stringValue) as! XMLNode
+        self.addNamespace(namespaceNode)
+        #endif
     }
 }
