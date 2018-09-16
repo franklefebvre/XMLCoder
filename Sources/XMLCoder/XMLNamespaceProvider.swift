@@ -57,11 +57,11 @@ extension XMLElement {
     func addNamespace(withName namespaceName: String, stringValue: String) {
         #if os(Linux)
         let attributeName: String
-        if name == "" {
+        if namespaceName == "" {
             attributeName = "xmlns"
         }
         else {
-            attributeName = "xmlns:\(name)"
+            attributeName = "xmlns:\(namespaceName)"
         }
         let attributeNode = XMLNode.attribute(withName: attributeName, stringValue: stringValue) as! XMLNode
         self.addAttribute(attributeNode)
