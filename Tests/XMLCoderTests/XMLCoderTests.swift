@@ -58,32 +58,64 @@ final class XMLCoderTests: XCTestCase {
         XCTAssertEqual(result?.substringWithXMLTag("root"), expected.substringWithXMLTag("root"))
     }
     
-    func testNamespaces() {
-        struct TestStruct: Encodable /*, FullyQualifiedCodable */ {
-            var string_element: String
-            
-            private enum CodingKeys: CodingKey, QualifiedCodingKey, String {
-                case string_element = "string"
-                
-                var namespace: String? { get {
-                    switch(self) {
-                    case .string_element:
-                        return "http://some.url.example.com/whatever"
-                    }
-                }}
-            }
-        }
+    struct NamespaceStruct: Encodable {
+        var with_namespace: String
+        var without_namespace: String
         
-        let value = TestStruct(string_element: "test")
+        private enum CodingKeys: String, CodingKey, XMLQualifiedKey {
+            case with_namespace
+            case without_namespace
+            
+            var namespace: String? { get {
+                switch(self) {
+                case .with_namespace:
+                    return "http://some.url.example.com/whatever"
+                default:
+                    return nil
+                }
+                }}
+        }
+        // extension declaration wouldn't work here (not file scope).
+    }
+    
+    func testNamespaces() {
+        let value = NamespaceStruct(with_namespace: "test1", without_namespace: "test2")
         let encoder = XMLEncoder()
         let xml = try! encoder.encode(value)
         let result = String(data: xml.xmlData, encoding: .utf8)
+        
+        let expected = """
+        <root xmlns:ns1="http://some.url.example.com/whatever">\
+        <ns1:with_namespace>test1</ns1:with_namespace>\
+        <without_namespace>test2</without_namespace>\
+        </root>
+        """
+        
+        XCTAssertEqual(result?.substringWithXMLTag("root"), expected.substringWithXMLTag("root"))
     }
-
-
+    
+    func testNamespacesWithOptions() {
+        let value = NamespaceStruct(with_namespace: "test1", without_namespace: "test2")
+        let encoder = XMLEncoder()
+        encoder.defaultNamespace = "http://some.url.example.com/default"
+        encoder.namespacePrefix = "nsns"
+        let xml = try! encoder.encode(value)
+        let result = String(data: xml.xmlData, encoding: .utf8)
+        
+        let expected = """
+        <root xmlns="http://some.url.example.com/default" xmlns:nsns1="http://some.url.example.com/whatever">\
+        <nsns1:with_namespace>test1</nsns1:with_namespace>\
+        <without_namespace>test2</without_namespace>\
+        </root>
+        """
+        
+        XCTAssertEqual(result?.substringWithXMLTag("root"), expected.substringWithXMLTag("root"))
+    }
+    
     static var allTests = [
         ("testEncodeBasicXML", testEncodeBasicXML),
         ("testAttributes", testAttributes),
         ("testNamespaces", testNamespaces),
+        ("testNamespacesWithOptions", testNamespacesWithOptions),
     ]
 }

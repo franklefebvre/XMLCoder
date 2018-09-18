@@ -10,11 +10,13 @@ import Foundation
 
 class _XMLEncoder: Encoder {
     
-    init(options: XMLEncoder._Options) {
+    init(options: XMLEncoder._Options, namespaceProvider: XMLNamespaceProvider) {
         self.options = options
+        self.namespaceProvider = namespaceProvider
     }
     
     let options: XMLEncoder._Options
+    let namespaceProvider: XMLNamespaceProvider
     
     var codingPath: [CodingKey] = []
     
@@ -56,8 +58,16 @@ class _XMLEncoder: Encoder {
         
         // MARK: - Coding Path Operations
         
-        private func _converted(_ key: CodingKey) -> CodingKey {
-            return key
+        private func _converted(_ key: CodingKey) -> String {
+            if let qualkey = key as? XMLQualifiedKey, let namespace = qualkey.namespace {
+                if let name = encoder.namespaceProvider.name(for: namespace) {
+                    // For now we'll move all namespace declarations up to the root level.
+                    // TODO: add namespace URI to current storage, unless already declared in hierarchy.
+                    return "\(name):\(key.stringValue)"
+                }
+            }
+            return key.stringValue
+            
             #if false
             switch encoder.options.keyEncodingStrategy {
             case .useDefaultKeys:
@@ -80,7 +90,7 @@ class _XMLEncoder: Encoder {
         }
         
         mutating func encode(_ value: String, forKey key: Key) throws {
-            let element = XMLNode.element(withName:_converted(key).stringValue, stringValue:value) as! XMLElement // box(value)
+            let element = XMLNode.element(withName:_converted(key), stringValue:value) as! XMLElement // box(value)
             self.container.nodes.append(element)
         }
         
@@ -134,7 +144,7 @@ class _XMLEncoder: Encoder {
         
         mutating func encode<T>(_ value: T, forKey key: Key) throws where T : Encodable {
             if let attribute = value as? CodableXMLAttribute {
-                let attributeNode = XMLNode.attribute(withName: _converted(key).stringValue, stringValue: attribute.value) as! XMLNode
+                let attributeNode = XMLNode.attribute(withName: _converted(key), stringValue: attribute.value) as! XMLNode
                 self.container.attributes.append(attributeNode)
                 return
             }
@@ -143,9 +153,9 @@ class _XMLEncoder: Encoder {
                 self.container.nodes.append(textNode)
                 return
             }
-            let childEncoder = _XMLEncoder(options: encoder.options)
+            let childEncoder = _XMLEncoder(options: encoder.options, namespaceProvider: encoder.namespaceProvider)
             try value.encode(to: childEncoder)
-            let element = XMLNode.element(withName:_converted(key).stringValue, children: childEncoder.topElements?.nodes, attributes: childEncoder.topElements?.attributes) as! XMLElement // box(value)
+            let element = XMLNode.element(withName:_converted(key), children: childEncoder.topElements?.nodes, attributes: childEncoder.topElements?.attributes) as! XMLElement // box(value)
             self.container.nodes.append(element)
         }
         
@@ -261,7 +271,7 @@ class _XMLEncoder: Encoder {
         }
         
         mutating func encode<T>(_ value: T) throws where T : Encodable {
-            let childEncoder = _XMLEncoder(options: encoder.options)
+            let childEncoder = _XMLEncoder(options: encoder.options, namespaceProvider: encoder.namespaceProvider)
             try value.encode(to: childEncoder)
             let element = XMLNode.element(withName:elementName, children: childEncoder.topElements?.nodes, attributes: nil) as! XMLElement // box(value)
             self.container.nodes.append(element)

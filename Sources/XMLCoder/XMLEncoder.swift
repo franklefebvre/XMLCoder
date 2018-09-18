@@ -92,16 +92,27 @@ open class XMLEncoder {
     /// Contextual user-provided information for use during encoding.
     open var userInfo: [CodingUserInfoKey : Any] = [:]
     
+    /// Namespace options
+    open var defaultNamespace: String? = nil
+    open var namespaceMap: [String: String] = [:]
+    open var namespacePrefix: String = "ns"
+    
     /// Options set on the top-level encoder to pass down the encoding hierarchy.
     struct _Options {
         let keyEncodingStrategy: KeyEncodingStrategy
         let userInfo: [CodingUserInfoKey : Any]
+        let defaultNamespace: String?
+        let namespaceMap: [String: String]
+        let namespacePrefix: String
     }
     
     /// The options set on the top-level encoder.
     var options: _Options {
         return _Options(keyEncodingStrategy: keyEncodingStrategy,
-                        userInfo: userInfo)
+                        userInfo: userInfo,
+                        defaultNamespace: defaultNamespace,
+                        namespaceMap: namespaceMap,
+                        namespacePrefix: namespacePrefix)
     }
     
     // MARK: - Constructing a XML Encoder
@@ -118,9 +129,11 @@ open class XMLEncoder {
     /// - throws: `EncodingError.invalidValue` if a non-conforming floating-point value is encountered during encoding, and the encoding strategy is `.throw`.
     /// - throws: An error if any value throws an error during encoding.
     open func encode<T : Encodable>(_ value: T) throws -> XMLDocument {
-        let encoder = _XMLEncoder(options: self.options)
+        let namespaceProvider = XMLNamespaceProvider(defaultURI: self.options.defaultNamespace, initialMapping: self.options.namespaceMap, namePrefix: self.options.namespacePrefix)
+        let encoder = _XMLEncoder(options: self.options, namespaceProvider: namespaceProvider)
         try value.encode(to: encoder)
         let element = encoder.topElement(withName: "root")
+        element.addNamespaces(from: namespaceProvider)
         let document = XMLNode.document(withRootElement:element) as! XMLDocument
         return document
     }
