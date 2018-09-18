@@ -112,10 +112,39 @@ final class XMLCoderTests: XCTestCase {
         XCTAssertEqual(result?.substringWithXMLTag("root"), expected.substringWithXMLTag("root"))
     }
     
+    func testArray() {
+        struct ArrayStruct: Encodable {
+            var string: String
+            var children: [ArrayElementStruct]
+        }
+        struct ArrayElementStruct: ExpressibleByStringLiteral, Encodable {
+            var child: String
+            init(stringLiteral: StringLiteralType) {
+                self.child = stringLiteral
+            }
+        }
+        
+        let value = ArrayStruct(string: "some text", children: ["one", "two", "three", "four"])
+        let encoder = XMLEncoder()
+        let xml = try! encoder.encode(value)
+        let result = String(data: xml.xmlData, encoding: .utf8)
+        
+        let expected = """
+        <root>\
+        <string>some text</string>\
+        <children><child>one</child><child>two</child><child>three</child><child>four</child></children>\
+        </root>
+        """
+        
+        XCTAssertEqual(result?.substringWithXMLTag("root"), expected.substringWithXMLTag("root"))
+        
+    }
+    
     static var allTests = [
         ("testEncodeBasicXML", testEncodeBasicXML),
         ("testAttributes", testAttributes),
         ("testNamespaces", testNamespaces),
         ("testNamespacesWithOptions", testNamespacesWithOptions),
+        ("testArray", testArray),
     ]
 }
