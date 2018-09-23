@@ -278,7 +278,7 @@ class _XMLEncoder: Encoder {
                 element = node
             }
             else {
-                element = XMLNode.element(withName:elementName, children: childEncoder.topElements?.nodes, attributes: nil) as! XMLElement // box(value)
+                element = XMLNode.element(withName:elementName, children: childEncoder.topElements?.nodes, attributes: childEncoder.topElements?.attributes) as! XMLElement // box(value)
             }
             self.container.nodes.append(element)
         }

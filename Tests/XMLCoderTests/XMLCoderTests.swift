@@ -137,7 +137,34 @@ final class XMLCoderTests: XCTestCase {
         """
         
         XCTAssertEqual(result?.substringWithXMLTag("root"), expected.substringWithXMLTag("root"))
+    }
+    
+    func testArrayWithAttributes() {
+        struct ArrayElementStruct: Encodable {
+            var id: CodableXMLAttribute
+            var inlineText: CodableXMLInlineText
+        }
         
+        let value = [
+            ArrayElementStruct(id: "1", inlineText: "one"),
+            ArrayElementStruct(id: "2", inlineText: "two"),
+            ArrayElementStruct(id: "3", inlineText: "three"),
+            ArrayElementStruct(id: "4", inlineText: "four"),
+        ]
+        let encoder = XMLEncoder()
+        let xml = try! encoder.encode(value)
+        let result = String(data: xml.xmlData, encoding: .utf8)
+        
+        let expected = """
+        <root>\
+        <element id="1">one</element>\
+        <element id="2">two</element>\
+        <element id="3">three</element>\
+        <element id="4">four</element>\
+        </root>
+        """
+        
+        XCTAssertEqual(result?.substringWithXMLTag("root"), expected.substringWithXMLTag("root"))
     }
     
     static var allTests = [
@@ -146,5 +173,6 @@ final class XMLCoderTests: XCTestCase {
         ("testNamespaces", testNamespaces),
         ("testNamespacesWithOptions", testNamespacesWithOptions),
         ("testArray", testArray),
+        ("testArrayWithAttributes", testArrayWithAttributes),
     ]
 }
