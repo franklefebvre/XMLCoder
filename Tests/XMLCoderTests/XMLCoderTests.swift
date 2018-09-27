@@ -112,17 +112,16 @@ final class XMLCoderTests: XCTestCase {
         XCTAssertEqual(result?.substringWithXMLTag("root"), expected.substringWithXMLTag("root"))
     }
     
-    func testArray() {
+    func testArrayWithKeyedStringElements() {
         struct ArrayStruct: Encodable {
             var string: String
-            var children: [ArrayElementStruct]
+            var children: [ArrayElement]
         }
-        struct ArrayElementStruct: ExpressibleByStringLiteral, Encodable {
-            var child: String
-            init(stringLiteral: StringLiteralType) {
-                self.child = stringLiteral
-            }
+        
+        struct ChildKey: XMLArrayKey {
+            static var elementName = "child"
         }
+        typealias ArrayElement = XMLArrayElement<ChildKey>
         
         let value = ArrayStruct(string: "some text", children: ["one", "two", "three", "four"])
         let encoder = XMLEncoder()
@@ -172,7 +171,7 @@ final class XMLCoderTests: XCTestCase {
         ("testAttributes", testAttributes),
         ("testNamespaces", testNamespaces),
         ("testNamespacesWithOptions", testNamespacesWithOptions),
-        ("testArray", testArray),
+        ("testArrayWithKeyedStringElements", testArrayWithKeyedStringElements),
         ("testArrayWithAttributes", testArrayWithAttributes),
     ]
 }
