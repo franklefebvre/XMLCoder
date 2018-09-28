@@ -166,6 +166,41 @@ final class XMLCoderTests: XCTestCase {
         XCTAssertEqual(result?.substringWithXMLTag("root"), expected.substringWithXMLTag("root"))
     }
     
+    func testArrayWithAlternatingKeysAndValues() {
+        struct KeyElement: Encodable {
+            let value: CodableXMLInlineText
+        }
+        struct ValueElement: Encodable {
+            let type: CodableXMLAttribute
+            let value: CodableXMLInlineText
+        }
+        struct ArrayElement: Encodable {
+            let key: KeyElement
+            let value: ValueElement
+        }
+        
+        let value: [ArrayElement] = [
+            ArrayElement(key: KeyElement(value: "one"), value: ValueElement(type: "string", value: "value 1")),
+            ArrayElement(key: KeyElement(value: "two"), value: ValueElement(type: "integer", value: "2")),
+        ]
+        
+        let encoder = XMLEncoder()
+        let xml = try! encoder.encode(value)
+        let result = String(data: xml.xmlData, encoding: .utf8)
+        
+        
+        let expected = """
+        <root>\
+        <key>one</key>\
+        <value type="string">value 1</value>\
+        <key>two</key>\
+        <value type="integer">2</value>\
+        </root>
+        """
+        
+        XCTAssertEqual(result?.substringWithXMLTag("root"), expected.substringWithXMLTag("root"))
+    }
+    
     static var allTests = [
         ("testEncodeBasicXML", testEncodeBasicXML),
         ("testAttributes", testAttributes),
@@ -173,5 +208,6 @@ final class XMLCoderTests: XCTestCase {
         ("testNamespacesWithOptions", testNamespacesWithOptions),
         ("testArrayWithKeyedStringElements", testArrayWithKeyedStringElements),
         ("testArrayWithAttributes", testArrayWithAttributes),
+        ("testArrayWithAlternatingKeysAndValues", testArrayWithAlternatingKeysAndValues),
     ]
 }

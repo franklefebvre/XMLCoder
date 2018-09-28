@@ -274,13 +274,15 @@ class _XMLEncoder: Encoder {
             let childEncoder = _XMLEncoder(options: encoder.options, namespaceProvider: encoder.namespaceProvider)
             try value.encode(to: childEncoder)
             let element: XMLElement
-            if let node = childEncoder.topElements?.nodes.first as? XMLElement {
-                element = node
+            if childEncoder.topElements?.nodes.first is XMLElement {
+                for element in childEncoder.topElements!.nodes {
+                    self.container.nodes.append(element)
+                }
             }
             else {
                 element = XMLNode.element(withName:elementName, children: childEncoder.topElements?.nodes, attributes: childEncoder.topElements?.attributes) as! XMLElement // box(value)
+                self.container.nodes.append(element)
             }
-            self.container.nodes.append(element)
         }
         
         mutating func nestedContainer<NestedKey>(keyedBy keyType: NestedKey.Type) -> KeyedEncodingContainer<NestedKey> where NestedKey : CodingKey {
