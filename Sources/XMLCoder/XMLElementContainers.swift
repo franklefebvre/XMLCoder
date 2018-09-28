@@ -8,24 +8,41 @@
 
 import Foundation
 
+enum XMLElementMode {
+    case inline
+    case keyed(String)
+}
+
+protocol XMLCustomElementMode {}
+
+typealias XMLStringElement = String
+extension XMLStringElement: XMLCustomElementMode {}
+
+typealias XMLIntElement = Int
+extension XMLIntElement: XMLCustomElementMode {}
+
 protocol XMLEncodingContainer {
     var nodes: [XMLNode] { get }
     var attributes: [XMLNode] { get }
+    var elementMode: XMLElementMode { get }
 }
 
 class UnkeyedXMLElementContainer: XMLEncodingContainer {
     var nodes: [XMLNode] = []
     var attributes: [XMLNode] = []
+    var elementMode: XMLElementMode = .keyed("element")
 }
 
 class KeyedXMLElementContainer: XMLEncodingContainer {
     var nodes: [XMLNode] = []
     var attributes: [XMLNode] = []
+    var elementMode: XMLElementMode = .inline
 }
 
 class SingleXMLElementContainer: XMLEncodingContainer {
     var nodes: [XMLNode] = []
     var attributes: [XMLNode] = []
+    var elementMode: XMLElementMode = .inline
 }
 
 struct CodableXMLString<T>: Encodable, ExpressibleByStringLiteral {

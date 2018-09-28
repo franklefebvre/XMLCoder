@@ -7,8 +7,8 @@ final class XMLCoderTests: XCTestCase {
 			var integer_element: Int
 			var string_element: String
 			var embedded_element: EmbeddedStruct
-			var string_array: [String]
-			var int_array: [Int]
+			var string_array: [XMLStringElement]
+			var int_array: [XMLIntElement]
 		}
 
 		struct EmbeddedStruct: Encodable {
@@ -139,7 +139,7 @@ final class XMLCoderTests: XCTestCase {
     }
     
     func testArrayWithAttributes() {
-        struct ArrayElementStruct: Encodable {
+        struct ArrayElementStruct: Encodable, XMLCustomElementMode {
             var id: CodableXMLAttribute
             var inlineText: CodableXMLInlineText
         }
