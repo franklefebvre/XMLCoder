@@ -201,6 +201,57 @@ final class XMLCoderTests: XCTestCase {
         XCTAssertEqual(result?.substringWithXMLTag("root"), expected.substringWithXMLTag("root"))
     }
     
+    func testArrayOfStructs() {
+        struct ArrayElement: Encodable, XMLCustomElementMode {
+            let field1: String
+            let field2: String
+        }
+        
+        let value = [
+            ArrayElement(field1: "first.1", field2: "first.2"),
+            ArrayElement(field1: "second.1", field2: "second.2"),
+            ArrayElement(field1: "third.1", field2: "third.2"),
+            ]
+        
+        let encoder = XMLEncoder()
+        let xml = try! encoder.encode(value)
+        let result = String(data: xml.xmlData, encoding: .utf8)
+        
+        let expected = """
+        <root>\
+        <element><field1>first.1</field1><field2>first.2</field2></element>\
+        <element><field1>second.1</field1><field2>second.2</field2></element>\
+        <element><field1>third.1</field1><field2>third.2</field2></element>\
+        </root>
+        """
+        
+        XCTAssertEqual(result?.substringWithXMLTag("root"), expected.substringWithXMLTag("root"))
+    }
+    
+    func testArrayOfArrays() {
+        let value: [[XMLStringElement]] = [
+            ["11", "12", "13"],
+            ["21", "22", "23"],
+            ["31", "32", "33"],
+            ["42"],
+        ]
+        
+        let encoder = XMLEncoder()
+        let xml = try! encoder.encode(value)
+        let result = String(data: xml.xmlData, encoding: .utf8)
+        
+        let expected = """
+        <root>\
+        <element><element>11</element><element>12</element><element>13</element></element>\
+        <element><element>21</element><element>22</element><element>23</element></element>\
+        <element><element>31</element><element>32</element><element>33</element></element>\
+        <element><element>42</element></element>\
+        </root>
+        """
+        
+        XCTAssertEqual(result?.substringWithXMLTag("root"), expected.substringWithXMLTag("root"))
+    }
+    
     static var allTests = [
         ("testEncodeBasicXML", testEncodeBasicXML),
         ("testAttributes", testAttributes),
@@ -209,5 +260,7 @@ final class XMLCoderTests: XCTestCase {
         ("testArrayWithKeyedStringElements", testArrayWithKeyedStringElements),
         ("testArrayWithAttributes", testArrayWithAttributes),
         ("testArrayWithAlternatingKeysAndValues", testArrayWithAlternatingKeysAndValues),
+        ("testArrayOfStructs", testArrayOfStructs),
+        ("testArrayOfArrays", testArrayOfArrays),
     ]
 }
