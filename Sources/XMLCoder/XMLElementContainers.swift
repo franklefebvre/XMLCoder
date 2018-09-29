@@ -13,13 +13,23 @@ enum XMLElementMode {
     case keyed(String)
 }
 
-protocol XMLCustomElementMode {}
+protocol XMLCustomElementMode {
+    var elementMode: XMLElementMode { get }
+}
 
 typealias XMLStringElement = String
-extension XMLStringElement: XMLCustomElementMode {}
+extension XMLStringElement: XMLCustomElementMode {
+    var elementMode: XMLElementMode {
+        return .keyed("element")
+    }
+}
 
 typealias XMLIntElement = Int
-extension XMLIntElement: XMLCustomElementMode {}
+extension XMLIntElement: XMLCustomElementMode {
+    var elementMode: XMLElementMode {
+        return .keyed("element")
+    }
+}
 
 protocol XMLEncodingContainer {
     var nodes: [XMLNode] { get }

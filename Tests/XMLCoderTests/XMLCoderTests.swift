@@ -142,6 +142,10 @@ final class XMLCoderTests: XCTestCase {
         struct ArrayElementStruct: Encodable, XMLCustomElementMode {
             var id: CodableXMLAttribute
             var inlineText: CodableXMLInlineText
+            
+            var elementMode: XMLElementMode {
+                return .keyed("element")
+            }
         }
         
         let value = [
@@ -205,6 +209,10 @@ final class XMLCoderTests: XCTestCase {
         struct ArrayElement: Encodable, XMLCustomElementMode {
             let field1: String
             let field2: String
+            
+            var elementMode: XMLElementMode {
+                return .keyed("element")
+            }
         }
         
         let value = [

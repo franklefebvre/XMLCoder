@@ -277,8 +277,8 @@ class _XMLEncoder: Encoder {
                 fatalError("Container wasn't created after successful encoding.")
             }
             let elementMode: XMLElementMode
-            if value is XMLCustomElementMode {
-                elementMode = .keyed("element")
+            if let value = value as? XMLCustomElementMode {
+                elementMode = value.elementMode
             }
             else {
                 elementMode = childContainer.elementMode
