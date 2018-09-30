@@ -106,9 +106,5 @@ struct XMLArrayElement<K: XMLArrayKey>: ExpressibleByStringLiteral, Encodable {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(value, forKey: key)
     }
-    
-    var elementName: String? {
-        return nil
-    }
 }
 
