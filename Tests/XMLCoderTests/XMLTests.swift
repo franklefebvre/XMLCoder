@@ -56,9 +56,27 @@ final class XMLTests: XCTestCase {
         XCTAssertEqual(ns1.stringValue, "http://namespace.example.com/ns/1")
     }
     
+    func testNamespaceImplementationOnLinux() {
+        #if os(Linux)
+        let element = XMLNode.element(withName: "element") as! XMLElement
+        let namespaceNode = XMLNode.namespace(withName: "ns1", stringValue: "http://namespace.example.com/ns/1") as! XMLNode
+        element.addNamespace(namespaceNode)
+        let xml = XMLDocument(rootElement: element)
+        let finalString = String(data: xml.xmlData, encoding: .utf8)
+        
+        let expectedString = """
+        <element xmlns:ns1="http://namespace.example.com/ns/1">\
+        </element>
+        """
+        
+        XCTAssertNotEqual(expectedString.substringWithXMLTag("element"), finalString?.substringWithXMLTag("element"), "Are namespaces implemented on Linux?")
+        #endif
+    }
+    
     static var allTests = [
         ("testWhitespace", testWhitespace),
         ("testCreateNamespaces", testCreateNamespaces),
         ("testParseNamespaces", testParseNamespaces),
+        ("testNamespaceImplementationOnLinux", testNamespaceImplementationOnLinux),
     ]
 }
