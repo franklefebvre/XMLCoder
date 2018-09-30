@@ -18,9 +18,7 @@ final class XMLCoderTests: XCTestCase {
 		let embedded = EmbeddedStruct(some_element: "inside")
 		let value = TestStruct(integer_element: 42, string_element: "   moof   & < >   ", embedded_element: embedded, string_array: ["one", "two", "three"], int_array: [1, 2, 3])
 
-		let encoder = XMLEncoder()
-		let xml = try! encoder.encode(value)
-		let result = String(data: xml.xmlData, encoding: .utf8)
+		let result = Test.xmlString(value)
 		
         let expected = """
         <root>\
@@ -32,7 +30,7 @@ final class XMLCoderTests: XCTestCase {
         </root>
         """
         
-        XCTAssertEqual(result?.substringWithXMLTag("root"), expected.substringWithXMLTag("root"))
+        XCTAssertEqual(result.substringWithXMLTag("root"), expected.substringWithXMLTag("root"))
     }
     
     func testAttributes() {
@@ -47,15 +45,22 @@ final class XMLCoderTests: XCTestCase {
         }
         
         let value = EnclosingStruct(container: AttributesStruct(element: "elem", attribute: "attr", inlineText: "text"), top_attribute: "top")
-        let encoder = XMLEncoder()
-        let xml = try! encoder.encode(value)
-        let result = String(data: xml.xmlData, encoding: .utf8)
+        
+        let result = Test.xmlString(value)
         
         let expected = """
         <root top_attribute="top"><container attribute="attr"><element>elem</element>text</container></root>
         """
         
-        XCTAssertEqual(result?.substringWithXMLTag("root"), expected.substringWithXMLTag("root"))
+        XCTAssertEqual(result.substringWithXMLTag("root"), expected.substringWithXMLTag("root"))
+        
+        #if false
+        let jsonResult = Test.jsonString(value)
+        let jsonExpected = """
+        {"container":{"attribute":"attr","element":"elem","inlineText":"text"},"top_attribute":"top"}
+        """
+        XCTAssertEqual(jsonResult, jsonExpected)
+        #endif
     }
     
     struct NamespaceStruct: Encodable {
@@ -66,23 +71,22 @@ final class XMLCoderTests: XCTestCase {
             case with_namespace
             case without_namespace
             
-            var namespace: String? { get {
+            var namespace: String? {
                 switch(self) {
                 case .with_namespace:
                     return "http://some.url.example.com/whatever"
                 default:
                     return nil
                 }
-                }}
+            }
         }
         // extension declaration wouldn't work here (not file scope).
     }
     
     func testNamespaces() {
         let value = NamespaceStruct(with_namespace: "test1", without_namespace: "test2")
-        let encoder = XMLEncoder()
-        let xml = try! encoder.encode(value)
-        let result = String(data: xml.xmlData, encoding: .utf8)
+        
+        let result = Test.xmlString(value)
         
         let expected = """
         <root xmlns:ns1="http://some.url.example.com/whatever">\
@@ -91,7 +95,13 @@ final class XMLCoderTests: XCTestCase {
         </root>
         """
         
-        XCTAssertEqual(result?.substringWithXMLTag("root"), expected.substringWithXMLTag("root"))
+        XCTAssertEqual(result.substringWithXMLTag("root"), expected.substringWithXMLTag("root"))
+        
+        let jsonResult = Test.jsonString(value)
+        let jsonExpected = """
+        {"with_namespace":"test1","without_namespace":"test2"}
+        """
+        XCTAssertEqual(jsonResult, jsonExpected)
     }
     
     func testNamespacesWithOptions() {
@@ -110,6 +120,12 @@ final class XMLCoderTests: XCTestCase {
         """
         
         XCTAssertEqual(result?.substringWithXMLTag("root"), expected.substringWithXMLTag("root"))
+        
+        let jsonResult = Test.jsonString(value)
+        let jsonExpected = """
+        {"with_namespace":"test1","without_namespace":"test2"}
+        """
+        XCTAssertEqual(jsonResult, jsonExpected)
     }
     
     func testArrayWithKeyedStringElements() {
@@ -124,9 +140,8 @@ final class XMLCoderTests: XCTestCase {
         typealias ArrayElement = XMLArrayElement<ChildKey>
         
         let value = ArrayStruct(string: "some text", children: ["one", "two", "three", "four"])
-        let encoder = XMLEncoder()
-        let xml = try! encoder.encode(value)
-        let result = String(data: xml.xmlData, encoding: .utf8)
+        
+        let result = Test.xmlString(value)
         
         let expected = """
         <root>\
@@ -135,7 +150,13 @@ final class XMLCoderTests: XCTestCase {
         </root>
         """
         
-        XCTAssertEqual(result?.substringWithXMLTag("root"), expected.substringWithXMLTag("root"))
+        XCTAssertEqual(result.substringWithXMLTag("root"), expected.substringWithXMLTag("root"))
+        
+        let jsonResult = Test.jsonString(value)
+        let jsonExpected = """
+        {"children":[{"child":"one"},{"child":"two"},{"child":"three"},{"child":"four"}],"string":"some text"}
+        """
+        XCTAssertEqual(jsonResult, jsonExpected)
     }
     
     func testArrayWithAttributes() {
@@ -154,9 +175,8 @@ final class XMLCoderTests: XCTestCase {
             ArrayElementStruct(id: "3", inlineText: "three"),
             ArrayElementStruct(id: "4", inlineText: "four"),
         ]
-        let encoder = XMLEncoder()
-        let xml = try! encoder.encode(value)
-        let result = String(data: xml.xmlData, encoding: .utf8)
+        
+        let result = Test.xmlString(value)
         
         let expected = """
         <root>\
@@ -167,7 +187,18 @@ final class XMLCoderTests: XCTestCase {
         </root>
         """
         
-        XCTAssertEqual(result?.substringWithXMLTag("root"), expected.substringWithXMLTag("root"))
+        XCTAssertEqual(result.substringWithXMLTag("root"), expected.substringWithXMLTag("root"))
+        
+        #if false
+        let jsonResult = Test.jsonString(value)
+        let jsonExpected = """
+        [{"id":"1","inlineText":"one"},\
+        {"id":"2","inlineText":"two"},\
+        {"id":"3","inlineText":"three"},\
+        {"id":"4","inlineText":"four"}]
+        """
+        XCTAssertEqual(jsonResult, jsonExpected)
+        #endif
     }
     
     func testArrayWithAlternatingKeysAndValues() {
@@ -188,10 +219,7 @@ final class XMLCoderTests: XCTestCase {
             ArrayElement(key: KeyElement(value: "two"), value: ValueElement(type: "integer", value: "2")),
         ]
         
-        let encoder = XMLEncoder()
-        let xml = try! encoder.encode(value)
-        let result = String(data: xml.xmlData, encoding: .utf8)
-        
+        let result = Test.xmlString(value)
         
         let expected = """
         <root>\
@@ -202,7 +230,7 @@ final class XMLCoderTests: XCTestCase {
         </root>
         """
         
-        XCTAssertEqual(result?.substringWithXMLTag("root"), expected.substringWithXMLTag("root"))
+        XCTAssertEqual(result.substringWithXMLTag("root"), expected.substringWithXMLTag("root"))
     }
     
     func testArrayOfStructs() {
@@ -221,9 +249,7 @@ final class XMLCoderTests: XCTestCase {
             ArrayElement(field1: "third.1", field2: "third.2"),
             ]
         
-        let encoder = XMLEncoder()
-        let xml = try! encoder.encode(value)
-        let result = String(data: xml.xmlData, encoding: .utf8)
+        let result = Test.xmlString(value)
         
         let expected = """
         <root>\
@@ -233,7 +259,15 @@ final class XMLCoderTests: XCTestCase {
         </root>
         """
         
-        XCTAssertEqual(result?.substringWithXMLTag("root"), expected.substringWithXMLTag("root"))
+        XCTAssertEqual(result.substringWithXMLTag("root"), expected.substringWithXMLTag("root"))
+        
+        let jsonResult = Test.jsonString(value)
+        let jsonExpected = """
+        [{"field1":"first.1","field2":"first.2"},\
+        {"field1":"second.1","field2":"second.2"},\
+        {"field1":"third.1","field2":"third.2"}]
+        """
+        XCTAssertEqual(jsonResult, jsonExpected)
     }
     
     func testArrayOfArrays() {
@@ -244,9 +278,7 @@ final class XMLCoderTests: XCTestCase {
             ["42"],
         ]
         
-        let encoder = XMLEncoder()
-        let xml = try! encoder.encode(value)
-        let result = String(data: xml.xmlData, encoding: .utf8)
+        let result = Test.xmlString(value)
         
         let expected = """
         <root>\
@@ -257,7 +289,16 @@ final class XMLCoderTests: XCTestCase {
         </root>
         """
         
-        XCTAssertEqual(result?.substringWithXMLTag("root"), expected.substringWithXMLTag("root"))
+        XCTAssertEqual(result.substringWithXMLTag("root"), expected.substringWithXMLTag("root"))
+        
+        let jsonResult = Test.jsonString(value)
+        let jsonExpected = """
+        [["11","12","13"],\
+        ["21","22","23"],\
+        ["31","32","33"],\
+        ["42"]]
+        """
+        XCTAssertEqual(jsonResult, jsonExpected)
     }
     
     static var allTests = [
