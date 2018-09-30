@@ -89,59 +89,6 @@ class _XMLEncoder: Encoder {
             fatalError()
         }
         
-        mutating func encode(_ value: String, forKey key: Key) throws {
-            let element = XMLNode.element(withName:_converted(key), stringValue:value) as! XMLElement // box(value)
-            self.container.nodes.append(element)
-        }
-        
-        mutating func encode(_ value: Double, forKey key: Key) throws {
-            fatalError()
-        }
-        
-        mutating func encode(_ value: Float, forKey key: Key) throws {
-            fatalError()
-        }
-        
-        mutating func encode(_ value: Int, forKey key: Key) throws {
-            try encode(String(value), forKey: key)
-        }
-        
-        mutating func encode(_ value: Int8, forKey key: Key) throws {
-            try encode(String(value), forKey: key)
-        }
-        
-        mutating func encode(_ value: Int16, forKey key: Key) throws {
-            try encode(String(value), forKey: key)
-        }
-        
-        mutating func encode(_ value: Int32, forKey key: Key) throws {
-            try encode(String(value), forKey: key)
-        }
-        
-        mutating func encode(_ value: Int64, forKey key: Key) throws {
-            try encode(String(value), forKey: key)
-        }
-        
-        mutating func encode(_ value: UInt, forKey key: Key) throws {
-            try encode(String(value), forKey: key)
-        }
-        
-        mutating func encode(_ value: UInt8, forKey key: Key) throws {
-            try encode(String(value), forKey: key)
-        }
-        
-        mutating func encode(_ value: UInt16, forKey key: Key) throws {
-            try encode(String(value), forKey: key)
-        }
-        
-        mutating func encode(_ value: UInt32, forKey key: Key) throws {
-            try encode(String(value), forKey: key)
-        }
-        
-        mutating func encode(_ value: UInt64, forKey key: Key) throws {
-            try encode(String(value), forKey: key)
-        }
-        
         mutating func encode<T>(_ value: T, forKey key: Key) throws where T : Encodable {
             if let attribute = value as? CodableXMLAttribute {
                 let attributeNode = XMLNode.attribute(withName: _converted(key), stringValue: attribute.value) as! XMLNode
@@ -215,59 +162,6 @@ class _XMLEncoder: Encoder {
         
         mutating func encode(_ value: Bool) throws {
             fatalError()
-        }
-        
-        mutating func encode(_ value: String) throws {
-            let element = XMLNode.element(withName:elementName, stringValue:value) as! XMLElement // box(value)
-            self.container.nodes.append(element)
-        }
-        
-        mutating func encode(_ value: Double) throws {
-            fatalError()
-        }
-        
-        mutating func encode(_ value: Float) throws {
-            fatalError()
-        }
-        
-        mutating func encode(_ value: Int) throws {
-            try encode(String(value))
-        }
-        
-        mutating func encode(_ value: Int8) throws {
-            try encode(String(value))
-        }
-        
-        mutating func encode(_ value: Int16) throws {
-            try encode(String(value))
-        }
-        
-        mutating func encode(_ value: Int32) throws {
-            try encode(String(value))
-        }
-        
-        mutating func encode(_ value: Int64) throws {
-            try encode(String(value))
-        }
-        
-        mutating func encode(_ value: UInt) throws {
-            try encode(String(value))
-        }
-        
-        mutating func encode(_ value: UInt8) throws {
-            try encode(String(value))
-        }
-        
-        mutating func encode(_ value: UInt16) throws {
-            try encode(String(value))
-        }
-        
-        mutating func encode(_ value: UInt32) throws {
-            try encode(String(value))
-        }
-        
-        mutating func encode(_ value: UInt64) throws {
-            try encode(String(value))
         }
         
         mutating func encode<T>(_ value: T) throws where T : Encodable {
