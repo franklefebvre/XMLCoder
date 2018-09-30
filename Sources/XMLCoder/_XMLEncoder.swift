@@ -273,8 +273,25 @@ class _XMLEncoder: Encoder {
         mutating func encode<T>(_ value: T) throws where T : Encodable {
             let childEncoder = _XMLEncoder(options: encoder.options, namespaceProvider: encoder.namespaceProvider)
             try value.encode(to: childEncoder)
-            let element = XMLNode.element(withName:elementName, children: childEncoder.topElements?.nodes, attributes: nil) as! XMLElement // box(value)
-            self.container.nodes.append(element)
+            guard let childContainer = childEncoder.topElements else {
+                fatalError("Container wasn't created after successful encoding.")
+            }
+            let elementMode: XMLElementMode
+            if let value = value as? XMLCustomElementMode {
+                elementMode = value.elementMode
+            }
+            else {
+                elementMode = childContainer.elementMode
+            }
+            switch elementMode {
+            case .inline:
+                for element in childContainer.nodes {
+                    self.container.nodes.append(element)
+                }
+            case .keyed(let elementName):
+                let element = XMLNode.element(withName:elementName, children: childContainer.nodes, attributes: childContainer.attributes) as! XMLElement // box(value)
+                self.container.nodes.append(element)
+            }
         }
         
         mutating func nestedContainer<NestedKey>(keyedBy keyType: NestedKey.Type) -> KeyedEncodingContainer<NestedKey> where NestedKey : CodingKey {
