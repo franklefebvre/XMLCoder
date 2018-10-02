@@ -83,7 +83,7 @@ class _XMLEncoder: Encoder {
         
         mutating func encodeNil(forKey key: Key) throws {
             if encoder.options.nilEncodingStrategy == .empty {
-                try encode("", forKey: key) // FIXME: this creates an element, regardless of the requested type
+                try encode("", forKey: key)
             }
         }
         
@@ -108,6 +108,12 @@ class _XMLEncoder: Encoder {
                 return
             }
             if children.nodes.isEmpty && children.attributes.isEmpty {
+                return
+            }
+            let valueIsOptionalAttribute = T.self == Optional<CodableXMLAttribute>.self
+            if valueIsOptionalAttribute, let attributeString = children.nodes.first?.stringValue {
+                let attributeNode = XMLNode.attribute(withName: _converted(key), stringValue: attributeString) as! XMLNode
+                self.container.attributes.append(attributeNode)
                 return
             }
             let element = XMLNode.element(withName:_converted(key), children: children.nodes, attributes: children.attributes) as! XMLElement // box(value)
@@ -164,7 +170,7 @@ class _XMLEncoder: Encoder {
         
         mutating func encodeNil() throws {
             if encoder.options.nilEncodingStrategy == .empty {
-                try encode("") // FIXME: this creates an element, regardless of the requested type
+                try encode("")
             }
         }
         
@@ -244,7 +250,7 @@ class _XMLEncoder: Encoder {
         
         mutating func encodeNil() throws {
             if encoder.options.nilEncodingStrategy == .empty {
-                try encode("") // FIXME: this creates an element, regardless of the requested type
+                try encode("")
             }
         }
         
@@ -257,8 +263,12 @@ class _XMLEncoder: Encoder {
             self.container.nodes.append(element)
         }
         
-        mutating func encode(_ value: Double) throws {
+        mutating func encode(_ value: Date) throws {
             fatalError()
+        }
+        
+        mutating func encode(_ value: Double) throws {
+            try encode(String(value))
         }
         
         mutating func encode(_ value: Float) throws {

@@ -344,7 +344,7 @@ final class XMLCoderTests: XCTestCase {
             }
         }
         
-        let value = OptionalStruct(optionalAttribute: "fail", mandatoryAttribute: "attr", optionalElement: nil, mandatoryElement: "elem")
+        let value = OptionalStruct(optionalAttribute: nil, mandatoryAttribute: "attr", optionalElement: nil, mandatoryElement: "elem")
         
         let encoder = XMLEncoder()
         encoder.nilEncodingStrategy = .empty
@@ -352,7 +352,7 @@ final class XMLCoderTests: XCTestCase {
         let result = String(data: xml.xmlData, encoding: .utf8)!
         
         let expected = """
-        <root optionalAttribute="fail" mandatoryAttribute="attr">\
+        <root optionalAttribute="" mandatoryAttribute="attr">\
         <optionalElement></optionalElement>\
         <mandatoryElement>elem</mandatoryElement>\
         </root>
