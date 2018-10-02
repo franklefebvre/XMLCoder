@@ -85,9 +85,20 @@ open class XMLEncoder {
             return result
         }
     }
+    
+    /// The strategy to use for encoding nil values in optional elements and attributes.
+    public enum NilEncodingStrategy {
+        /// Remove the attribute or element altogether. This is the default strategy.
+        case missing
+        /// Generate an empty element, or an attribute with an empty string.
+        case empty
+    }
 
     /// The strategy to use for encoding keys. Defaults to `.useDefaultKeys`.
     open var keyEncodingStrategy: KeyEncodingStrategy = .useDefaultKeys
+    
+    /// The strategy to use for encoding nil optionals. Defaults to `.missing`.
+    open var nilEncodingStrategy: NilEncodingStrategy = .missing
     
     /// Contextual user-provided information for use during encoding.
     open var userInfo: [CodingUserInfoKey : Any] = [:]
@@ -100,6 +111,7 @@ open class XMLEncoder {
     /// Options set on the top-level encoder to pass down the encoding hierarchy.
     struct _Options {
         let keyEncodingStrategy: KeyEncodingStrategy
+        let nilEncodingStrategy: NilEncodingStrategy
         let userInfo: [CodingUserInfoKey : Any]
         let defaultNamespace: String?
         let namespaceMap: [String: String]
@@ -109,6 +121,7 @@ open class XMLEncoder {
     /// The options set on the top-level encoder.
     var options: _Options {
         return _Options(keyEncodingStrategy: keyEncodingStrategy,
+                        nilEncodingStrategy: nilEncodingStrategy,
                         userInfo: userInfo,
                         defaultNamespace: defaultNamespace,
                         namespaceMap: namespaceMap,

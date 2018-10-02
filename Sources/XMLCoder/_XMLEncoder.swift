@@ -82,7 +82,9 @@ class _XMLEncoder: Encoder {
         }        
         
         mutating func encodeNil(forKey key: Key) throws {
-            fatalError()
+            if encoder.options.nilEncodingStrategy == .empty {
+                try encode("", forKey: key) // FIXME: this creates an element, regardless of the requested type
+            }
         }
         
         mutating func encode(_ value: Bool, forKey key: Key) throws {
@@ -102,7 +104,13 @@ class _XMLEncoder: Encoder {
             }
             let childEncoder = _XMLEncoder(options: encoder.options, namespaceProvider: encoder.namespaceProvider)
             try value.encode(to: childEncoder)
-            let element = XMLNode.element(withName:_converted(key), children: childEncoder.topElements?.nodes, attributes: childEncoder.topElements?.attributes) as! XMLElement // box(value)
+            guard let children = childEncoder.topElements else {
+                return
+            }
+            if children.nodes.isEmpty && children.attributes.isEmpty {
+                return
+            }
+            let element = XMLNode.element(withName:_converted(key), children: children.nodes, attributes: children.attributes) as! XMLElement // box(value)
             self.container.nodes.append(element)
         }
         
@@ -145,8 +153,6 @@ class _XMLEncoder: Encoder {
         
         var count: Int { get { return container.nodes.count }}
         
-        let elementName = "element"
-        
         // MARK: - Initialization
         
         /// Initializes `self` with the given references.
@@ -157,7 +163,9 @@ class _XMLEncoder: Encoder {
         }
         
         mutating func encodeNil() throws {
-            fatalError()
+            if encoder.options.nilEncodingStrategy == .empty {
+                try encode("") // FIXME: this creates an element, regardless of the requested type
+            }
         }
         
         mutating func encode(_ value: Bool) throws {
@@ -235,7 +243,9 @@ class _XMLEncoder: Encoder {
         }
         
         mutating func encodeNil() throws {
-            fatalError()
+            if encoder.options.nilEncodingStrategy == .empty {
+                try encode("") // FIXME: this creates an element, regardless of the requested type
+            }
         }
         
         mutating func encode(_ value: Bool) throws {

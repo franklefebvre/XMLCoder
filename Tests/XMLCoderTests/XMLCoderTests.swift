@@ -301,6 +301,65 @@ final class XMLCoderTests: XCTestCase {
         XCTAssertEqual(jsonResult, jsonExpected)
     }
     
+    func testNilAsMissing() {
+        struct OptionalStruct: Encodable {
+            var optionalAttribute: CodableXMLAttribute?
+            var mandatoryAttribute: CodableXMLAttribute
+            var optionalElement: String?
+            var mandatoryElement: String
+        }
+        
+        let value = OptionalStruct(optionalAttribute: nil, mandatoryAttribute: "attr", optionalElement: nil, mandatoryElement: "elem")
+        
+        let result = Test.xmlString(value)
+        
+        let expected = """
+        <root mandatoryAttribute="attr">\
+        <mandatoryElement>elem</mandatoryElement>\
+        </root>
+        """
+        XCTAssertEqual(result.substringWithXMLTag("root"), expected.substringWithXMLTag("root"))
+    }
+    
+    func testNilAsEmpty() {
+        struct OptionalStruct: Encodable {
+            var optionalAttribute: CodableXMLAttribute?
+            var mandatoryAttribute: CodableXMLAttribute
+            var optionalElement: String?
+            var mandatoryElement: String
+            
+            enum CodingKeys: CodingKey {
+                case optionalAttribute
+                case mandatoryAttribute
+                case optionalElement
+                case mandatoryElement
+            }
+            
+            func encode(to encoder: Encoder) throws {
+                var container = encoder.container(keyedBy: CodingKeys.self)
+                try container.encode(optionalAttribute, forKey: .optionalAttribute)
+                try container.encode(mandatoryAttribute, forKey: .mandatoryAttribute)
+                try container.encode(optionalElement, forKey: .optionalElement)
+                try container.encode(mandatoryElement, forKey: .mandatoryElement)
+            }
+        }
+        
+        let value = OptionalStruct(optionalAttribute: "fail", mandatoryAttribute: "attr", optionalElement: nil, mandatoryElement: "elem")
+        
+        let encoder = XMLEncoder()
+        encoder.nilEncodingStrategy = .empty
+        let xml = try! encoder.encode(value)
+        let result = String(data: xml.xmlData, encoding: .utf8)!
+        
+        let expected = """
+        <root optionalAttribute="fail" mandatoryAttribute="attr">\
+        <optionalElement></optionalElement>\
+        <mandatoryElement>elem</mandatoryElement>\
+        </root>
+        """
+        XCTAssertEqual(result.substringWithXMLTag("root"), expected.substringWithXMLTag("root"))
+    }
+    
     static var allTests = [
         ("testEncodeBasicXML", testEncodeBasicXML),
         ("testAttributes", testAttributes),
@@ -311,5 +370,7 @@ final class XMLCoderTests: XCTestCase {
         ("testArrayWithAlternatingKeysAndValues", testArrayWithAlternatingKeysAndValues),
         ("testArrayOfStructs", testArrayOfStructs),
         ("testArrayOfArrays", testArrayOfArrays),
+        ("testNilAsMissing", testNilAsMissing),
+        ("testNilAsEmpty", testNilAsEmpty),
     ]
 }
