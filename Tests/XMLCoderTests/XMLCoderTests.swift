@@ -360,6 +360,24 @@ final class XMLCoderTests: XCTestCase {
         XCTAssertEqual(result.substringWithXMLTag("root"), expected.substringWithXMLTag("root"))
     }
     
+    func testFloatAndDouble() {
+        struct FloatDoubleStruct: Encodable {
+            var f: Float
+            var d: Double
+        }
+        
+        let value = FloatDoubleStruct(f: 1e-10, d: 1e-15)
+        
+        let result = Test.xmlString(value)
+        let expected = """
+        <root>\
+        <f>0.0000000001</f>\
+        <d>0.000000000000001</d>\
+        </root>
+        """
+        XCTAssertEqual(result.substringWithXMLTag("root"), expected.substringWithXMLTag("root"))
+    }
+    
     static var allTests = [
         ("testEncodeBasicXML", testEncodeBasicXML),
         ("testAttributes", testAttributes),
@@ -372,5 +390,6 @@ final class XMLCoderTests: XCTestCase {
         ("testArrayOfArrays", testArrayOfArrays),
         ("testNilAsMissing", testNilAsMissing),
         ("testNilAsEmpty", testNilAsEmpty),
+        ("testFloatAndDouble", testFloatAndDouble),
     ]
 }

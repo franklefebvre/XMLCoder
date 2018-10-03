@@ -18,6 +18,18 @@ class _XMLEncoder: Encoder {
     let options: XMLEncoder._Options
     let namespaceProvider: XMLNamespaceProvider
     
+    lazy var floatFormatter = newDecimalFormatter(16)
+    lazy var doubleFormatter = newDecimalFormatter(128)
+    
+    private func newDecimalFormatter(_ precision: Int) -> NumberFormatter {
+        let formatter = NumberFormatter()
+        formatter.locale = Locale(identifier: "C")
+        formatter.numberStyle = .decimal
+        formatter.minimumFractionDigits = 1
+        formatter.maximumFractionDigits = precision
+        return formatter
+    }
+    
     var codingPath: [CodingKey] = []
     
     var userInfo: [CodingUserInfoKey : Any] = [:]
@@ -268,11 +280,17 @@ class _XMLEncoder: Encoder {
         }
         
         mutating func encode(_ value: Double) throws {
-            try encode(String(value))
+            guard let formattedValue = encoder.doubleFormatter.string(for: value) else {
+                return
+            }
+            try encode(formattedValue)
         }
         
         mutating func encode(_ value: Float) throws {
-            fatalError()
+            guard let formattedValue = encoder.floatFormatter.string(for: value) else {
+                return
+            }
+            try encode(formattedValue)
         }
         
         mutating func encode(_ value: Int) throws {
