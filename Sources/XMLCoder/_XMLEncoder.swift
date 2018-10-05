@@ -20,13 +20,24 @@ class _XMLEncoder: Encoder {
     
     lazy var floatFormatter = newDecimalFormatter(16)
     lazy var doubleFormatter = newDecimalFormatter(128)
+    lazy var dateFormatter = newDateFormatter()
     
     private func newDecimalFormatter(_ precision: Int) -> NumberFormatter {
         let formatter = NumberFormatter()
-        formatter.locale = Locale(identifier: "C")
+        formatter.locale = Locale(identifier: "en_US_POSIX")
         formatter.numberStyle = .decimal
         formatter.minimumFractionDigits = 1
         formatter.maximumFractionDigits = precision
+        return formatter
+    }
+    
+    private func newDateFormatter() -> DateFormatter {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.timeZone = TimeZone(secondsFromGMT: 0)
+        formatter.dateStyle = .full
+        formatter.timeStyle = .full
+        formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:SS'Z'"
         return formatter
     }
     
@@ -115,7 +126,12 @@ class _XMLEncoder: Encoder {
                 return
             }
             let childEncoder = _XMLEncoder(options: encoder.options, namespaceProvider: encoder.namespaceProvider)
-            try value.encode(to: childEncoder)
+            if let string = try encoder.converted(value: value) {
+                try string.encode(to: childEncoder)
+            }
+            else {
+                try value.encode(to: childEncoder)
+            }
             guard let children = childEncoder.topElements else {
                 return
             }
@@ -275,10 +291,6 @@ class _XMLEncoder: Encoder {
             self.container.nodes.append(element)
         }
         
-        mutating func encode(_ value: Date) throws {
-            fatalError()
-        }
-        
         mutating func encode(_ value: Double) throws {
             guard let formattedValue = encoder.doubleFormatter.string(for: value) else {
                 return
@@ -336,5 +348,25 @@ class _XMLEncoder: Encoder {
         mutating func encode<T>(_ value: T) throws where T : Encodable {
             fatalError()
         }
+    }
+    
+    private func converted<T>(value: T) throws -> String? where T : Encodable {
+        if T.self == Date.self {
+            return try converted(value as! Date)
+        }
+        else if T.self == URL.self {
+            return converted(value as! URL)
+        }
+        else {
+            return nil
+        }
+    }
+    
+    private func converted(_ date: Date) throws -> String {
+        return dateFormatter.string(from: date) // TODO: use DateEncodingStrategy
+    }
+    
+    private func converted(_ url: URL) -> String {
+        return url.absoluteString
     }
 }
