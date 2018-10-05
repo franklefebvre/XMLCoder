@@ -208,18 +208,24 @@ class _XMLEncoder: Encoder {
         
         mutating func encode<T>(_ value: T) throws where T : Encodable {
             let childEncoder = _XMLEncoder(options: encoder.options, namespaceProvider: encoder.namespaceProvider)
-            try value.encode(to: childEncoder)
+            var elementMode: XMLElementMode?
+            if let string = try encoder.converted(value: value) {
+                try string.encode(to: childEncoder)
+                elementMode = string.elementMode
+            }
+            else {
+                try value.encode(to: childEncoder)
+                if let value = value as? XMLCustomElementMode {
+                    elementMode = value.elementMode
+                }
+            }
             guard let childContainer = childEncoder.topElements else {
                 fatalError("Container wasn't created after successful encoding.")
             }
-            let elementMode: XMLElementMode
-            if let value = value as? XMLCustomElementMode {
-                elementMode = value.elementMode
-            }
-            else {
+            if elementMode == nil {
                 elementMode = childContainer.elementMode
             }
-            switch elementMode {
+            switch elementMode! {
             case .inline:
                 for element in childContainer.nodes {
                     self.container.nodes.append(element)
@@ -350,7 +356,7 @@ class _XMLEncoder: Encoder {
         }
     }
     
-    private func converted<T>(value: T) throws -> String? where T : Encodable {
+    private func converted<T>(value: T) throws -> XMLStringElement? where T : Encodable {
         if T.self == Date.self {
             return try converted(value as! Date)
         }
@@ -362,11 +368,11 @@ class _XMLEncoder: Encoder {
         }
     }
     
-    private func converted(_ date: Date) throws -> String {
+    private func converted(_ date: Date) throws -> XMLStringElement {
         return dateFormatter.string(from: date) // TODO: use DateEncodingStrategy
     }
     
-    private func converted(_ url: URL) -> String {
+    private func converted(_ url: URL) -> XMLStringElement {
         return url.absoluteString
     }
 }

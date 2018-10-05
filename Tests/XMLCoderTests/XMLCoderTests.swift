@@ -381,19 +381,23 @@ final class XMLCoderTests: XCTestCase {
     func testDateAndURL() {
         struct DateURLStruct: Encodable {
             var date: Date
+            var dates: [Date]
             var url: URL
+            var urls: [URL]
         }
         
         let date = Date(timeIntervalSince1970: 1)
         let url = URL(string: "https://swift.org/")!
-        let value = DateURLStruct(date: date, url: url)
+        let value = DateURLStruct(date: date, dates: [date, date], url: url, urls: [url, url])
         
         let result = Test.xmlString(value)
         
         let expected = """
         <root>\
         <date>1970-01-01T00:00:00Z</date>\
+        <dates><element>1970-01-01T00:00:00Z</element><element>1970-01-01T00:00:00Z</element></dates>\
         <url>https://swift.org/</url>\
+        <urls><element>https://swift.org/</element><element>https://swift.org/</element></urls>\
         </root>
         """
         XCTAssertEqual(result.substringWithXMLTag("root"), expected.substringWithXMLTag("root"))
