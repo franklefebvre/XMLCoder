@@ -363,6 +363,9 @@ class _XMLEncoder: Encoder {
         else if T.self == URL.self {
             return converted(value as! URL)
         }
+        else if T.self == Data.self {
+            return converted(value as! Data)
+        }
         else if T.self == Bool.self {
             return converted(value as! Bool)
         }
@@ -377,6 +380,10 @@ class _XMLEncoder: Encoder {
     
     private func converted(_ url: URL) -> XMLStringElement {
         return url.absoluteString
+    }
+    
+    private func converted(_ data: Data) -> XMLStringElement {
+        return data.base64EncodedString() // TODO: use DataEncodingStrategy
     }
     
     private func converted(_ bool: Bool) -> XMLStringElement {

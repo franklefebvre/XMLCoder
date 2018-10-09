@@ -443,6 +443,25 @@ final class XMLCoderTests: XCTestCase {
         XCTAssertEqual(result.substringWithXMLTag("root"), expected.substringWithXMLTag("root"))
     }
     
+    func testData() {
+        struct DataStruct: Encodable {
+            var element: Data
+            var elements: [Data]
+        }
+        
+        let data = Data(bytes: [0x42, 0x00, 0xff])
+        let value = DataStruct(element: data, elements: [data, data])
+        
+        let result = Test.xmlString(value)
+        let expected = """
+        <root>\
+        <element>QgD/</element>\
+        <elements><element>QgD/</element><element>QgD/</element></elements>\
+        </root>
+        """
+        XCTAssertEqual(result.substringWithXMLTag("root"), expected.substringWithXMLTag("root"))
+    }
+    
     static var allTests = [
         ("testEncodeBasicXML", testEncodeBasicXML),
         ("testAttributes", testAttributes),
@@ -459,5 +478,6 @@ final class XMLCoderTests: XCTestCase {
         ("testDateAndURL", testDateAndURL),
         ("testBoolWithDefaultStrategy", testBoolWithDefaultStrategy),
         ("testBoolWithCustomStrategy", testBoolWithCustomStrategy),
+        ("testData", testData),
     ]
 }
