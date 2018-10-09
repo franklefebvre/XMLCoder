@@ -111,7 +111,7 @@ class _XMLEncoder: Encoder {
         }
         
         mutating func encode(_ value: Bool, forKey key: Key) throws {
-            fatalError()
+            try encode(encoder.converted(value), forKey: key)
         }
         
         mutating func encode<T>(_ value: T, forKey key: Key) throws where T : Encodable {
@@ -203,7 +203,7 @@ class _XMLEncoder: Encoder {
         }
         
         mutating func encode(_ value: Bool) throws {
-            fatalError()
+            try encode(encoder.converted(value))
         }
         
         mutating func encode<T>(_ value: T) throws where T : Encodable {
@@ -289,7 +289,7 @@ class _XMLEncoder: Encoder {
         }
         
         mutating func encode(_ value: Bool) throws {
-            fatalError()
+            try encode(encoder.converted(value))
         }
         
         mutating func encode(_ value: String) throws {
@@ -363,6 +363,9 @@ class _XMLEncoder: Encoder {
         else if T.self == URL.self {
             return converted(value as! URL)
         }
+        else if T.self == Bool.self {
+            return converted(value as! Bool)
+        }
         else {
             return nil
         }
@@ -374,5 +377,9 @@ class _XMLEncoder: Encoder {
     
     private func converted(_ url: URL) -> XMLStringElement {
         return url.absoluteString
+    }
+    
+    private func converted(_ bool: Bool) -> XMLStringElement {
+        return bool ? options.boolEncodingStrategy.trueValue : options.boolEncodingStrategy.falseValue
     }
 }

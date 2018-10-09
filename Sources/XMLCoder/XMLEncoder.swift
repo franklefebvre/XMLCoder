@@ -93,12 +93,21 @@ open class XMLEncoder {
         /// Generate an empty element, or an attribute with an empty string.
         case empty
     }
+    
+    /// The strategy to use for encoding boolean values.
+    public struct BoolEncodingStrategy {
+        let falseValue: String
+        let trueValue: String
+    }
 
     /// The strategy to use for encoding keys. Defaults to `.useDefaultKeys`.
     open var keyEncodingStrategy: KeyEncodingStrategy = .useDefaultKeys
     
     /// The strategy to use for encoding nil optionals. Defaults to `.missing`.
     open var nilEncodingStrategy: NilEncodingStrategy = .missing
+    
+    /// The strategy to use for encoding boolean values. Defaults to `0|1`.
+    open var boolEncodingStrategy = BoolEncodingStrategy(falseValue: "0", trueValue: "1")
     
     /// Contextual user-provided information for use during encoding.
     open var userInfo: [CodingUserInfoKey : Any] = [:]
@@ -112,6 +121,7 @@ open class XMLEncoder {
     struct _Options {
         let keyEncodingStrategy: KeyEncodingStrategy
         let nilEncodingStrategy: NilEncodingStrategy
+        let boolEncodingStrategy: BoolEncodingStrategy
         let userInfo: [CodingUserInfoKey : Any]
         let defaultNamespace: String?
         let namespaceMap: [String: String]
@@ -122,6 +132,7 @@ open class XMLEncoder {
     var options: _Options {
         return _Options(keyEncodingStrategy: keyEncodingStrategy,
                         nilEncodingStrategy: nilEncodingStrategy,
+                        boolEncodingStrategy: boolEncodingStrategy,
                         userInfo: userInfo,
                         defaultNamespace: defaultNamespace,
                         namespaceMap: namespaceMap,

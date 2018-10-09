@@ -403,6 +403,46 @@ final class XMLCoderTests: XCTestCase {
         XCTAssertEqual(result.substringWithXMLTag("root"), expected.substringWithXMLTag("root"))
     }
     
+    func testBoolWithDefaultStrategy() {
+        struct BoolStruct: Encodable {
+            var test: Bool
+            var tests: [Bool]
+        }
+        
+        let value = BoolStruct(test: true, tests: [false, true, false])
+        
+        let result = Test.xmlString(value)
+        let expected = """
+        <root>\
+        <test>1</test>\
+        <tests><element>0</element><element>1</element><element>0</element></tests>\
+        </root>
+        """
+        XCTAssertEqual(result.substringWithXMLTag("root"), expected.substringWithXMLTag("root"))
+    }
+    
+    func testBoolWithCustomStrategy() {
+        struct BoolStruct: Encodable {
+            var test: Bool
+            var tests: [Bool]
+        }
+        
+        let value = BoolStruct(test: true, tests: [false, true, false])
+        
+        let encoder = XMLEncoder()
+        encoder.boolEncodingStrategy = XMLEncoder.BoolEncodingStrategy(falseValue: "no", trueValue: "yes")
+        let xml = try! encoder.encode(value)
+        let result = String(data: xml.xmlData, encoding: .utf8)!
+        
+        let expected = """
+        <root>\
+        <test>yes</test>\
+        <tests><element>no</element><element>yes</element><element>no</element></tests>\
+        </root>
+        """
+        XCTAssertEqual(result.substringWithXMLTag("root"), expected.substringWithXMLTag("root"))
+    }
+    
     static var allTests = [
         ("testEncodeBasicXML", testEncodeBasicXML),
         ("testAttributes", testAttributes),
@@ -417,5 +457,7 @@ final class XMLCoderTests: XCTestCase {
         ("testNilAsEmpty", testNilAsEmpty),
         ("testFloatAndDouble", testFloatAndDouble),
         ("testDateAndURL", testDateAndURL),
+        ("testBoolWithDefaultStrategy", testBoolWithDefaultStrategy),
+        ("testBoolWithCustomStrategy", testBoolWithCustomStrategy),
     ]
 }
