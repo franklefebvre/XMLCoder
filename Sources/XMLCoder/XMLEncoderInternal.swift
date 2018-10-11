@@ -1,5 +1,5 @@
 //
-//  _XMLEncoder.swift
+//  XMLEncoderInternal.swift
 //  XMLCoder
 //
 //  Created by Frank on 23/08/2018.
