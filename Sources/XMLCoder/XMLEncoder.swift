@@ -85,23 +85,58 @@ open class XMLEncoder {
             return result
         }
     }
+    
+    /// The strategy to use for encoding nil values in optional elements and attributes.
+    public enum NilEncodingStrategy {
+        /// Remove the attribute or element altogether. This is the default strategy.
+        case missing
+        /// Generate an empty element, or an attribute with an empty string.
+        case empty
+    }
+    
+    /// The strategy to use for encoding boolean values.
+    public struct BoolEncodingStrategy {
+        let falseValue: String
+        let trueValue: String
+    }
 
     /// The strategy to use for encoding keys. Defaults to `.useDefaultKeys`.
     open var keyEncodingStrategy: KeyEncodingStrategy = .useDefaultKeys
     
+    /// The strategy to use for encoding nil optionals. Defaults to `.missing`.
+    open var nilEncodingStrategy: NilEncodingStrategy = .missing
+    
+    /// The strategy to use for encoding boolean values. Defaults to `0|1`.
+    open var boolEncodingStrategy = BoolEncodingStrategy(falseValue: "0", trueValue: "1")
+    
     /// Contextual user-provided information for use during encoding.
     open var userInfo: [CodingUserInfoKey : Any] = [:]
+    
+    /// Namespace options
+    open var defaultNamespace: String? = nil
+    open var namespaceMap: [String: String] = [:]
+    open var namespacePrefix: String = "ns"
     
     /// Options set on the top-level encoder to pass down the encoding hierarchy.
     struct _Options {
         let keyEncodingStrategy: KeyEncodingStrategy
+        let nilEncodingStrategy: NilEncodingStrategy
+        let boolEncodingStrategy: BoolEncodingStrategy
         let userInfo: [CodingUserInfoKey : Any]
+        let defaultNamespace: String?
+        let namespaceMap: [String: String]
+        let namespacePrefix: String
     }
     
     /// The options set on the top-level encoder.
     var options: _Options {
         return _Options(keyEncodingStrategy: keyEncodingStrategy,
-                        userInfo: userInfo)
+                        nilEncodingStrategy: nilEncodingStrategy,
+                        boolEncodingStrategy: boolEncodingStrategy,
+                        userInfo: userInfo,
+                        defaultNamespace: defaultNamespace,
+                        namespaceMap: namespaceMap,
+                        namespacePrefix: namespacePrefix)
     }
     
     // MARK: - Constructing a XML Encoder
@@ -114,13 +149,15 @@ open class XMLEncoder {
     /// Encodes the given top-level value and returns its XML representation.
     ///
     /// - parameter value: The value to encode.
-    /// - returns: A new `Data` value containing the encoded XML data.
+    /// - returns: A new `XMLDocument` value containing the encoded XML DOM.
     /// - throws: `EncodingError.invalidValue` if a non-conforming floating-point value is encountered during encoding, and the encoding strategy is `.throw`.
     /// - throws: An error if any value throws an error during encoding.
     open func encode<T : Encodable>(_ value: T) throws -> XMLDocument {
-        let encoder = _XMLEncoder(options: self.options)
+        let namespaceProvider = XMLNamespaceProvider(defaultURI: self.options.defaultNamespace, initialMapping: self.options.namespaceMap, namePrefix: self.options.namespacePrefix)
+        let encoder = _XMLEncoder(options: self.options, namespaceProvider: namespaceProvider)
         try value.encode(to: encoder)
         let element = encoder.topElement(withName: "root")
+        element.addNamespaces(from: namespaceProvider)
         let document = XMLNode.document(withRootElement:element) as! XMLDocument
         return document
     }
