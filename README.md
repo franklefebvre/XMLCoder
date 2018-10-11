@@ -1,3 +1,3 @@
 # XMLCoder
 
-A description of this package.
+This package is a Swift Encoder for XML.
