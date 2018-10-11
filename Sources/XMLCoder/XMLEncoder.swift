@@ -149,7 +149,7 @@ open class XMLEncoder {
     /// Encodes the given top-level value and returns its XML representation.
     ///
     /// - parameter value: The value to encode.
-    /// - returns: A new `Data` value containing the encoded XML data.
+    /// - returns: A new `XMLDocument` value containing the encoded XML DOM.
     /// - throws: `EncodingError.invalidValue` if a non-conforming floating-point value is encountered during encoding, and the encoding strategy is `.throw`.
     /// - throws: An error if any value throws an error during encoding.
     open func encode<T : Encodable>(_ value: T) throws -> XMLDocument {

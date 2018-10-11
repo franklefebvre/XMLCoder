@@ -1,5 +1,5 @@
 //
-//  XMLElementContainers.swift
+//  XMLElementStorage.swift
 //  XMLCoder
 //
 //  Created by Frank on 24/08/2018.
@@ -31,25 +31,25 @@ extension XMLIntElement: XMLCustomElementMode {
     }
 }
 
-protocol XMLEncodingContainer {
+protocol XMLEncodingStorage {
     var nodes: [XMLNode] { get }
     var attributes: [XMLNode] { get }
     var elementMode: XMLElementMode { get }
 }
 
-class UnkeyedXMLElementContainer: XMLEncodingContainer {
+class UnkeyedXMLElementStorage: XMLEncodingStorage {
     var nodes: [XMLNode] = []
     var attributes: [XMLNode] = []
     var elementMode: XMLElementMode = .keyed("element")
 }
 
-class KeyedXMLElementContainer: XMLEncodingContainer {
+class KeyedXMLElementStorage: XMLEncodingStorage {
     var nodes: [XMLNode] = []
     var attributes: [XMLNode] = []
     var elementMode: XMLElementMode = .inline
 }
 
-class SingleXMLElementContainer: XMLEncodingContainer {
+class SingleXMLElementStorage: XMLEncodingStorage {
     var nodes: [XMLNode] = []
     var attributes: [XMLNode] = []
     var elementMode: XMLElementMode = .inline

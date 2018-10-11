@@ -49,13 +49,13 @@ class _XMLEncoder: Encoder {
         return XMLNode.element(withName: name, children: topElements?.nodes ?? [], attributes: topElements?.attributes ?? []) as! XMLElement
     }
     
-    var topElements: XMLEncodingContainer?
+    var topElements: XMLEncodingStorage?
     
     func container<Key>(keyedBy type: Key.Type) -> KeyedEncodingContainer<Key> where Key : CodingKey {
         if topElements == nil {
-            topElements = KeyedXMLElementContainer()
+            topElements = KeyedXMLElementStorage()
         }
-        return KeyedEncodingContainer(XMLKeyedEncodingContainer(referencing: self, codingPath: codingPath, wrapping: topElements as! KeyedXMLElementContainer))
+        return KeyedEncodingContainer(XMLKeyedEncodingContainer(referencing: self, codingPath: codingPath, wrapping: topElements as! KeyedXMLElementStorage))
     }
     
     struct XMLKeyedEncodingContainer<Key: CodingKey>: KeyedEncodingContainerProtocol {
@@ -64,8 +64,8 @@ class _XMLEncoder: Encoder {
         /// A reference to the encoder we're writing to.
         private let encoder: _XMLEncoder
         
-        /// A reference to the container we're writing to.
-        private var container: KeyedXMLElementContainer
+        /// A reference to the storage we're writing to.
+        private var storage: KeyedXMLElementStorage
         
         /// The path of coding keys taken to get to this point in encoding.
         private(set) public var codingPath: [CodingKey]
@@ -73,10 +73,10 @@ class _XMLEncoder: Encoder {
         // MARK: - Initialization
         
         /// Initializes `self` with the given references.
-        fileprivate init(referencing encoder: _XMLEncoder, codingPath: [CodingKey], wrapping container: KeyedXMLElementContainer) {
+        fileprivate init(referencing encoder: _XMLEncoder, codingPath: [CodingKey], wrapping storage: KeyedXMLElementStorage) {
             self.encoder = encoder
             self.codingPath = codingPath
-            self.container = container
+            self.storage = storage
         }
         
         // MARK: - Coding Path Operations
@@ -117,12 +117,12 @@ class _XMLEncoder: Encoder {
         mutating func encode<T>(_ value: T, forKey key: Key) throws where T : Encodable {
             if let attribute = value as? CodableXMLAttribute {
                 let attributeNode = XMLNode.attribute(withName: _converted(key), stringValue: attribute.value) as! XMLNode
-                self.container.attributes.append(attributeNode)
+                self.storage.attributes.append(attributeNode)
                 return
             }
             if let inlineText = value as? CodableXMLInlineText {
                 let textNode = XMLNode.text(withStringValue: inlineText.value) as! XMLNode
-                self.container.nodes.append(textNode)
+                self.storage.nodes.append(textNode)
                 return
             }
             let childEncoder = _XMLEncoder(options: encoder.options, namespaceProvider: encoder.namespaceProvider)
@@ -141,11 +141,11 @@ class _XMLEncoder: Encoder {
             let valueIsOptionalAttribute = T.self == Optional<CodableXMLAttribute>.self
             if valueIsOptionalAttribute, let attributeString = children.nodes.first?.stringValue {
                 let attributeNode = XMLNode.attribute(withName: _converted(key), stringValue: attributeString) as! XMLNode
-                self.container.attributes.append(attributeNode)
+                self.storage.attributes.append(attributeNode)
                 return
             }
             let element = XMLNode.element(withName:_converted(key), children: children.nodes, attributes: children.attributes) as! XMLElement // box(value)
-            self.container.nodes.append(element)
+            self.storage.nodes.append(element)
         }
         
         mutating func nestedContainer<NestedKey>(keyedBy keyType: NestedKey.Type, forKey key: Key) -> KeyedEncodingContainer<NestedKey> where NestedKey : CodingKey {
@@ -167,9 +167,9 @@ class _XMLEncoder: Encoder {
     
     func unkeyedContainer() -> UnkeyedEncodingContainer {
         if topElements == nil {
-            topElements = UnkeyedXMLElementContainer()
+            topElements = UnkeyedXMLElementStorage()
         }
-        return XMLUnkeyedEncodingContainer(referencing: self, codingPath: codingPath, wrapping: topElements as! UnkeyedXMLElementContainer)
+        return XMLUnkeyedEncodingContainer(referencing: self, codingPath: codingPath, wrapping: topElements as! UnkeyedXMLElementStorage)
     }
     
     struct XMLUnkeyedEncodingContainer: UnkeyedEncodingContainer {
@@ -179,21 +179,21 @@ class _XMLEncoder: Encoder {
         /// A reference to the encoder we're writing to.
         private let encoder: _XMLEncoder
         
-        /// A reference to the container we're writing to.
-        private var container: UnkeyedXMLElementContainer
+        /// A reference to the storage we're writing to.
+        private var storage: UnkeyedXMLElementStorage
         
         /// The path of coding keys taken to get to this point in encoding.
         private(set) public var codingPath: [CodingKey]
         
-        var count: Int { get { return container.nodes.count }}
+        var count: Int { get { return storage.nodes.count }}
         
         // MARK: - Initialization
         
         /// Initializes `self` with the given references.
-        fileprivate init(referencing encoder: _XMLEncoder, codingPath: [CodingKey], wrapping container: UnkeyedXMLElementContainer) {
+        fileprivate init(referencing encoder: _XMLEncoder, codingPath: [CodingKey], wrapping storage: UnkeyedXMLElementStorage) {
             self.encoder = encoder
             self.codingPath = codingPath
-            self.container = container
+            self.storage = storage
         }
         
         mutating func encodeNil() throws {
@@ -219,20 +219,20 @@ class _XMLEncoder: Encoder {
                     elementMode = value.elementMode
                 }
             }
-            guard let childContainer = childEncoder.topElements else {
-                fatalError("Container wasn't created after successful encoding.")
+            guard let childStorage = childEncoder.topElements else {
+                fatalError("Storage wasn't created after successful encoding.")
             }
             if elementMode == nil {
-                elementMode = childContainer.elementMode
+                elementMode = childStorage.elementMode
             }
             switch elementMode! {
             case .inline:
-                for element in childContainer.nodes {
-                    self.container.nodes.append(element)
+                for element in childStorage.nodes {
+                    self.storage.nodes.append(element)
                 }
             case .keyed(let elementName):
-                let element = XMLNode.element(withName:elementName, children: childContainer.nodes, attributes: childContainer.attributes) as! XMLElement // box(value)
-                self.container.nodes.append(element)
+                let element = XMLNode.element(withName:elementName, children: childStorage.nodes, attributes: childStorage.attributes) as! XMLElement // box(value)
+                self.storage.nodes.append(element)
             }
         }
         
@@ -252,12 +252,12 @@ class _XMLEncoder: Encoder {
     
     func singleValueContainer() -> SingleValueEncodingContainer {
         if topElements == nil {
-            topElements = SingleXMLElementContainer()
+            topElements = SingleXMLElementStorage()
         }
         else {
             fatalError()
         }
-        return XMLSingleValueEncodingContainer(referencing: self, codingPath: codingPath, wrapping: topElements as! SingleXMLElementContainer)
+        return XMLSingleValueEncodingContainer(referencing: self, codingPath: codingPath, wrapping: topElements as! SingleXMLElementStorage)
     }
     
     struct XMLSingleValueEncodingContainer: SingleValueEncodingContainer {
@@ -267,8 +267,8 @@ class _XMLEncoder: Encoder {
         /// A reference to the encoder we're writing to.
         private let encoder: _XMLEncoder
         
-        /// A reference to the container we're writing to.
-        private var container: SingleXMLElementContainer
+        /// A reference to the storage we're writing to.
+        private var storage: SingleXMLElementStorage
         
         /// The path of coding keys taken to get to this point in encoding.
         private(set) public var codingPath: [CodingKey]
@@ -276,10 +276,10 @@ class _XMLEncoder: Encoder {
         // MARK: - Initialization
         
         /// Initializes `self` with the given references.
-        fileprivate init(referencing encoder: _XMLEncoder, codingPath: [CodingKey], wrapping container: SingleXMLElementContainer) {
+        fileprivate init(referencing encoder: _XMLEncoder, codingPath: [CodingKey], wrapping storage: SingleXMLElementStorage) {
             self.encoder = encoder
             self.codingPath = codingPath
-            self.container = container
+            self.storage = storage
         }
         
         mutating func encodeNil() throws {
@@ -294,7 +294,7 @@ class _XMLEncoder: Encoder {
         
         mutating func encode(_ value: String) throws {
             let element = XMLNode.text(withStringValue:value) as! XMLNode // box(value)
-            self.container.nodes.append(element)
+            self.storage.nodes.append(element)
         }
         
         mutating func encode(_ value: Double) throws {
