@@ -8,103 +8,127 @@
 
 import Foundation
 
-enum XMLElementMode {
+enum XMLNodeType {
+    case element
+    case attribute
     case inline
-    case keyed(String)
-}
-
-protocol XMLCustomElementMode {
-    var elementMode: XMLElementMode { get }
-}
-
-typealias XMLStringElement = String
-extension XMLStringElement: XMLCustomElementMode {
-    var elementMode: XMLElementMode {
-        return .keyed("element")
-    }
-}
-
-typealias XMLIntElement = Int
-extension XMLIntElement: XMLCustomElementMode {
-    var elementMode: XMLElementMode {
-        return .keyed("element")
-    }
+    case array(String?)
 }
 
 protocol XMLEncodingStorage {
     var nodes: [XMLNode] { get }
     var attributes: [XMLNode] { get }
-    var elementMode: XMLElementMode { get }
+    
+    func append(node: XMLNode)
+    func append(attribute: XMLNode)
 }
+
+// TODO: reimplement as structs after recursion has been gotten rid of
 
 class UnkeyedXMLElementStorage: XMLEncodingStorage {
     var nodes: [XMLNode] = []
     var attributes: [XMLNode] = []
-    var elementMode: XMLElementMode = .keyed("element")
+    
+    func append(node: XMLNode) {
+        if node.kind == .attribute {
+            attributes.append(node)
+        }
+        else {
+            nodes.append(node)
+        }
+    }
+    
+    func append(_ elements: [XMLNode]) {
+        nodes.append(contentsOf: elements)
+    }
+    
+    func append(attribute: XMLNode) { // TODO: remove
+        attributes.append(attribute)
+    }
 }
 
 class KeyedXMLElementStorage: XMLEncodingStorage {
     var nodes: [XMLNode] = []
     var attributes: [XMLNode] = []
-    var elementMode: XMLElementMode = .inline
+    
+    func append(node: XMLNode) {
+        if node.kind == .attribute {
+            attributes.append(node)
+        }
+        else {
+            nodes.append(node)
+        }
+    }
+    
+    func append(attribute: XMLNode) { // TODO: remove
+        attributes.append(attribute)
+    }
 }
 
 class SingleXMLElementStorage: XMLEncodingStorage {
     var nodes: [XMLNode] = []
     var attributes: [XMLNode] = []
-    var elementMode: XMLElementMode = .inline
-}
-
-struct CodableXMLString<T>: Encodable, ExpressibleByStringLiteral {
-    typealias StringLiteralType = String
     
-    let value: String
+    func append(node: XMLNode) {
+        if node.kind == .attribute {
+            attributes.append(node)
+        }
+        else {
+            nodes.append(node)
+        }
+    }
     
-    init(stringLiteral: StringLiteralType) {
-        self.value = stringLiteral
+    func append(attribute: XMLNode) { // TODO: remove
+        attributes.append(attribute)
     }
 }
 
-enum InlineTextType {}
-enum AttributeType {}
-
-typealias CodableXMLInlineText = CodableXMLString<InlineTextType>
-typealias CodableXMLAttribute = CodableXMLString<AttributeType>
+class RootXMLStorage: XMLEncodingStorage {
+    private var stack: [XMLEncodingStorage] = []
+    
+    var count: Int {
+        return stack.count
+    }
+    
+    var last: XMLEncodingStorage {
+        guard let last = stack.last else {
+            fatalError()
+        }
+        return last
+    }
+    
+    var nodes: [XMLNode] {
+        return stack.last!.nodes
+    }
+    var attributes: [XMLNode] {
+        return stack.last!.attributes
+    }
+    
+    func append(node: XMLNode) {
+        stack.last!.append(node: node)
+    }
+    
+    func append(attribute: XMLNode) {
+        stack.last!.append(attribute: attribute)
+    }
+    
+    func push(storage: XMLEncodingStorage) {
+        stack.append(storage)
+    }
+    
+    func pop() -> XMLEncodingStorage {
+        return stack.removeLast()
+    }
+}
 
 protocol XMLQualifiedKey {
     var namespace: String? { get }
 }
 
+protocol XMLTypedKey {
+    var nodeType: XMLNodeType { get }
+}
+
 protocol XMLArrayKey {
     static var elementName: String { get }
 }
-
-struct XMLArrayElement<K: XMLArrayKey>: ExpressibleByStringLiteral, Encodable {
-    var value: String
-    init(stringLiteral: StringLiteralType) {
-        self.value = stringLiteral
-    }
-    
-    private struct CodingKeys: CodingKey {
-        var stringValue: String
-        
-        init?(stringValue: String) {
-            self.stringValue = stringValue
-        }
-        
-        var intValue: Int? {
-            return nil
-        }
-        
-        init?(intValue: Int) {
-            return nil
-        }
-    }
-    
-    func encode(to encoder: Encoder) throws {
-        let key = CodingKeys(stringValue: K.elementName)!
-        var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(value, forKey: key)
-    }
-}
-

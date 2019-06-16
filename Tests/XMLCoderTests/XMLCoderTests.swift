@@ -7,8 +7,8 @@ final class XMLCoderTests: XCTestCase {
 			var integer_element: Int
 			var string_element: String
 			var embedded_element: EmbeddedStruct
-			var string_array: [XMLStringElement]
-			var int_array: [XMLIntElement]
+			var string_array: [String]
+			var int_array: [Int]
 		}
 
 		struct EmbeddedStruct: Encodable {
@@ -36,31 +36,64 @@ final class XMLCoderTests: XCTestCase {
     func testAttributes() {
         struct EnclosingStruct: Encodable {
             var container: AttributesStruct
-            var top_attribute: CodableXMLAttribute
+            var top_attribute: String
+            
+            private enum CodingKeys: String, CodingKey, XMLTypedKey {
+                case container
+                case top_attribute
+                
+                var nodeType: XMLNodeType {
+                    switch self {
+                    case .top_attribute:
+                        return .attribute
+                    default:
+                        return .element
+                    }
+                }
+            }
         }
+            
         struct AttributesStruct: Encodable {
             var element: String
-            var attribute: CodableXMLAttribute
-            var inlineText: CodableXMLInlineText
+            var attribute: String
+            var inlineText: String
+            var number: Int
+            
+            private enum CodingKeys: String, CodingKey, XMLTypedKey {
+                case element
+                case attribute
+                case inlineText
+                case number
+                
+                var nodeType: XMLNodeType {
+                    switch self {
+                    case .attribute:
+                        return .attribute
+                    case .inlineText:
+                        return .inline
+                    default:
+                        return .element
+                    }
+                }
+            }
         }
         
-        let value = EnclosingStruct(container: AttributesStruct(element: "elem", attribute: "attr", inlineText: "text"), top_attribute: "top")
+        let contents = AttributesStruct(element: "elem", attribute: "attr", inlineText: "text", number: 42)
+        let value = EnclosingStruct(container: contents, top_attribute: "top")
         
         let result = Test.xmlString(value)
         
         let expected = """
-        <root top_attribute="top"><container attribute="attr"><element>elem</element>text</container></root>
+        <root top_attribute="top"><container attribute="attr"><element>elem</element>text<number>42</number></container></root>
         """
         
         XCTAssertEqual(result.substringWithXMLTag("root"), expected.substringWithXMLTag("root"))
         
-        #if false
         let jsonResult = Test.jsonString(value)
         let jsonExpected = """
-        {"container":{"attribute":"attr","element":"elem","inlineText":"text"},"top_attribute":"top"}
+        {"container":{"attribute":"attr","element":"elem","inlineText":"text","number":42},"top_attribute":"top"}
         """
         XCTAssertEqual(jsonResult, jsonExpected)
-        #endif
     }
     
     struct NamespaceStruct: Encodable {
@@ -131,13 +164,22 @@ final class XMLCoderTests: XCTestCase {
     func testArrayWithKeyedStringElements() {
         struct ArrayStruct: Encodable {
             var string: String
-            var children: [ArrayElement]
+            var children: [String]
+            
+            private enum CodingKeys: String, CodingKey, XMLTypedKey {
+                case string
+                case children
+                
+                var nodeType: XMLNodeType {
+                    switch self {
+                    case .children:
+                        return .array("child")
+                    default:
+                        return .element
+                    }
+                }
+            }
         }
-        
-        struct ChildKey: XMLArrayKey {
-            static var elementName = "child"
-        }
-        typealias ArrayElement = XMLArrayElement<ChildKey>
         
         let value = ArrayStruct(string: "some text", children: ["one", "two", "three", "four"])
         
@@ -154,18 +196,28 @@ final class XMLCoderTests: XCTestCase {
         
         let jsonResult = Test.jsonString(value)
         let jsonExpected = """
-        {"children":[{"child":"one"},{"child":"two"},{"child":"three"},{"child":"four"}],"string":"some text"}
+        {"children":["one","two","three","four"],"string":"some text"}
         """
         XCTAssertEqual(jsonResult, jsonExpected)
     }
     
     func testArrayWithAttributes() {
-        struct ArrayElementStruct: Encodable, XMLCustomElementMode {
-            var id: CodableXMLAttribute
-            var inlineText: CodableXMLInlineText
+        struct ArrayElementStruct: Encodable {
+            var id: String
+            var inlineText: String
             
-            var elementMode: XMLElementMode {
-                return .keyed("element")
+            private enum CodingKeys: String, CodingKey, XMLTypedKey {
+                case id
+                case inlineText
+                
+                var nodeType: XMLNodeType {
+                    switch self {
+                    case .id:
+                        return .attribute
+                    case .inlineText:
+                        return .inline
+                    }
+                }
             }
         }
         
@@ -189,7 +241,6 @@ final class XMLCoderTests: XCTestCase {
         
         XCTAssertEqual(result.substringWithXMLTag("root"), expected.substringWithXMLTag("root"))
         
-        #if false
         let jsonResult = Test.jsonString(value)
         let jsonExpected = """
         [{"id":"1","inlineText":"one"},\
@@ -198,49 +249,71 @@ final class XMLCoderTests: XCTestCase {
         {"id":"4","inlineText":"four"}]
         """
         XCTAssertEqual(jsonResult, jsonExpected)
-        #endif
     }
     
     func testArrayWithAlternatingKeysAndValues() {
         struct KeyElement: Encodable {
-            let value: CodableXMLInlineText
+            let value: String
+            private enum CodingKeys: String, CodingKey, XMLTypedKey {
+                case value
+                var nodeType: XMLNodeType {
+                    return .inline
+                }
+            }
         }
         struct ValueElement: Encodable {
-            let type: CodableXMLAttribute
-            let value: CodableXMLInlineText
+            let type: String
+            let value: String
+            private enum CodingKeys: String, CodingKey, XMLTypedKey {
+                case type
+                case value
+                var nodeType: XMLNodeType {
+                    switch self {
+                    case .type:
+                        return .attribute
+                    case .value:
+                        return .inline
+                    }
+                }
+            }
         }
         struct ArrayElement: Encodable {
             let key: KeyElement
             let value: ValueElement
         }
+        struct Root: Encodable { // TODO: conform encoder root to TypedKey, so that Root can be defined as [ArrayElement]
+            let array: [ArrayElement]
+            private enum CodingKeys: String, CodingKey, XMLTypedKey {
+                case array
+                var nodeType: XMLNodeType {
+                    return .array(nil)
+                }
+            }
+        }
         
-        let value: [ArrayElement] = [
+        let value = Root(array: [
             ArrayElement(key: KeyElement(value: "one"), value: ValueElement(type: "string", value: "value 1")),
             ArrayElement(key: KeyElement(value: "two"), value: ValueElement(type: "integer", value: "2")),
-        ]
+        ])
         
         let result = Test.xmlString(value)
         
         let expected = """
-        <root>\
+        <root><array>\
         <key>one</key>\
         <value type="string">value 1</value>\
         <key>two</key>\
         <value type="integer">2</value>\
-        </root>
+        </array></root>
         """
         
         XCTAssertEqual(result.substringWithXMLTag("root"), expected.substringWithXMLTag("root"))
     }
     
     func testArrayOfStructs() {
-        struct ArrayElement: Encodable, XMLCustomElementMode {
+        struct ArrayElement: Encodable {
             let field1: String
             let field2: String
-            
-            var elementMode: XMLElementMode {
-                return .keyed("element")
-            }
         }
         
         let value = [
@@ -271,7 +344,7 @@ final class XMLCoderTests: XCTestCase {
     }
     
     func testArrayOfArrays() {
-        let value: [[XMLStringElement]] = [
+        let value: [[String]] = [
             ["11", "12", "13"],
             ["21", "22", "23"],
             ["31", "32", "33"],
@@ -302,11 +375,27 @@ final class XMLCoderTests: XCTestCase {
     }
     
     func testNilAsMissing() {
-        struct OptionalStruct: Encodable {
-            var optionalAttribute: CodableXMLAttribute?
-            var mandatoryAttribute: CodableXMLAttribute
+        struct OptionalStruct: Encodable { // TODO: factorize this struct
+            var optionalAttribute: String?
+            var mandatoryAttribute: String
             var optionalElement: String?
             var mandatoryElement: String
+            
+            enum CodingKeys: CodingKey, XMLTypedKey {
+                case optionalAttribute
+                case mandatoryAttribute
+                case optionalElement
+                case mandatoryElement
+                
+                var nodeType: XMLNodeType {
+                    switch self {
+                    case .optionalAttribute, .mandatoryAttribute:
+                        return .attribute
+                    default:
+                        return .element
+                    }
+                }
+            }
         }
         
         let value = OptionalStruct(optionalAttribute: nil, mandatoryAttribute: "attr", optionalElement: nil, mandatoryElement: "elem")
@@ -323,24 +412,25 @@ final class XMLCoderTests: XCTestCase {
     
     func testNilAsEmpty() {
         struct OptionalStruct: Encodable {
-            var optionalAttribute: CodableXMLAttribute?
-            var mandatoryAttribute: CodableXMLAttribute
+            var optionalAttribute: String?
+            var mandatoryAttribute: String
             var optionalElement: String?
             var mandatoryElement: String
             
-            enum CodingKeys: CodingKey {
+            enum CodingKeys: CodingKey, XMLTypedKey {
                 case optionalAttribute
                 case mandatoryAttribute
                 case optionalElement
                 case mandatoryElement
-            }
-            
-            func encode(to encoder: Encoder) throws {
-                var container = encoder.container(keyedBy: CodingKeys.self)
-                try container.encode(optionalAttribute, forKey: .optionalAttribute)
-                try container.encode(mandatoryAttribute, forKey: .mandatoryAttribute)
-                try container.encode(optionalElement, forKey: .optionalElement)
-                try container.encode(mandatoryElement, forKey: .mandatoryElement)
+                
+                var nodeType: XMLNodeType {
+                    switch self {
+                    case .optionalAttribute, .mandatoryAttribute:
+                        return .attribute
+                    default:
+                        return .element
+                    }
+                }
             }
         }
         
