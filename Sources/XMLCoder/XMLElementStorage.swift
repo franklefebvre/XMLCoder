@@ -132,3 +132,23 @@ protocol XMLTypedKey {
 protocol XMLArrayKey {
     static var elementName: String { get }
 }
+
+// MARK: Decoding
+
+class XMLDecodingStorage {
+    private var stack: [XMLNode] = []
+    
+    func push(node: XMLNode) {
+        stack.append(node)
+    }
+    
+    func pop() -> XMLNode {
+        return stack.removeLast()
+    }
+    
+    var topContainer: XMLNode {
+        get {
+            return stack.last!
+        }
+    }
+}

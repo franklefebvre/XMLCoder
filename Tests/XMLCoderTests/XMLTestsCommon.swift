@@ -33,4 +33,11 @@ struct Test {
         let result = String(data: json, encoding: .utf8)!
         return result
     }
+    
+    static func decode<T: Decodable>(_ type: T.Type, from string: String) -> T {
+        let document = try! XMLDocument(xmlString: string)
+        let decoder = XMLDecoder()
+        let result = try! decoder.decode(type, from: document)
+        return result
+    }
 }
