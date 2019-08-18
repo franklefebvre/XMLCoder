@@ -38,9 +38,11 @@ class _XMLDecoder: Decoder {
     // MARK: - Decoder Methods
     
     func container<Key>(keyedBy type: Key.Type) throws -> KeyedDecodingContainer<Key> where Key : CodingKey {
-        // guard...
+        guard let element = storage.topContainer as? XMLElement else {
+            fatalError() // TODO: throw
+        }
         // codingPath...
-        let container = XMLKeyedDecodingContainer<Key>(referencing: self, codingPath: codingPath, wrapping: storage.topContainer)
+        let container = XMLKeyedDecodingContainer<Key>(referencing: self, codingPath: codingPath, wrapping: element)
         return KeyedDecodingContainer(container)
     }
     
@@ -64,7 +66,9 @@ class _XMLDecoder: Decoder {
         private var container: XMLNode
         
         /// A shortcut for quick access to the container's children nodes by key.
-        private var children: [String: XMLNode]
+        private var elements: [String: XMLNode]
+        private var attributes: [String: XMLNode]
+        private var textNodes: [XMLNode]
         
         /// The path of coding keys taken to get to this point in decoding.
         private(set) public var codingPath: [CodingKey]
@@ -74,26 +78,66 @@ class _XMLDecoder: Decoder {
         // MARK: - Initialization
         
         /// Initializes `self` with the given references.
-        fileprivate init(referencing decoder: _XMLDecoder, codingPath: [CodingKey], wrapping container: XMLNode) {
+        fileprivate init(referencing decoder: _XMLDecoder, codingPath: [CodingKey], wrapping container: XMLElement) {
             self.decoder = decoder
             self.codingPath = codingPath
             self.container = container
             self.allKeys = []
-            var children = [String: XMLNode]()
-            if let childNodes = container.children {
-                for child in childNodes {
+            var elements = [String: XMLNode]()
+            var attributes = [String: XMLNode]()
+            var textNodes = [XMLNode]()
+            for child in container.children ?? [] {
+                switch child.kind {
+                case .element:
                     if let name = child.name {
-                        children[name] = child
+                        elements[name] = child
                     }
+                case .attribute:
+                    if let name = child.name {
+                        attributes[name] = child
+                    }
+                case .text:
+                    textNodes.append(child)
+                default:
+                    break
                 }
             }
-            self.children = children
+            for attribute in container.attributes ?? [] {
+                if let name = attribute.name {
+                    attributes[name] = attribute
+                }
+            }
+            self.elements = elements
+            self.attributes = attributes
+            self.textNodes = textNodes
+        }
+        
+        // MARK: - Coding Path Operations
+        
+        private func _nodeType(_ key: CodingKey) -> XMLNodeType {
+            guard let typedKey = key as? XMLTypedKey else {
+                return .element
+            }
+            return typedKey.nodeType
         }
         
         // MARK: KeyedDecodingContainerProtocol Implementation
         
         func contains(_ key: Key) -> Bool {
             fatalError()
+        }
+        
+        func node(forKey key: Key) -> XMLNode? {
+            switch _nodeType(key) {
+            case .element:
+                return elements[key.stringValue]
+            case .attribute:
+                return attributes[key.stringValue]
+            case .inline:
+                return textNodes.first
+            case .array(_):
+                return nil
+            }
         }
         
         func decodeNil(forKey key: Key) throws -> Bool {
@@ -105,7 +149,7 @@ class _XMLDecoder: Decoder {
         }
         
         func decode(_ type: String.Type, forKey key: Key) throws -> String { // TODO: decodeStringElement, decodeStringAttribute
-            guard let node = children[key.stringValue] else {
+            guard let node = node(forKey: key) else {
                 throw DecodingError.valueNotFound(type, DecodingError.Context(codingPath: self.decoder.codingPath, debugDescription: "No value associated with key \(key.stringValue)."))
             }
             return node.stringValue ?? ""
@@ -200,7 +244,7 @@ class _XMLDecoder: Decoder {
         }
         
         func decode<T>(_ type: T.Type, forKey key: Key) throws -> T where T : Decodable {
-            guard let node = children[key.stringValue] else {
+            guard let node = node(forKey: key) else {
                 throw DecodingError.valueNotFound(type, DecodingError.Context(codingPath: self.decoder.codingPath, debugDescription: "No value associated with key \(key.stringValue)."))
             }
             guard let value = try decoder.unboxElement(node, as: type) else {

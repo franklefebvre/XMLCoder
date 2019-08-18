@@ -34,10 +34,10 @@ struct Test {
         return result
     }
     
-    static func decode<T: Decodable>(_ type: T.Type, from string: String) -> T {
-        let document = try! XMLDocument(xmlString: string)
+    static func decode<T: Decodable>(_ type: T.Type, from string: String) throws -> T {
+        let document = try XMLDocument(xmlString: string)
         let decoder = XMLDecoder()
-        let result = try! decoder.decode(type, from: document)
+        let result = try decoder.decode(type, from: document)
         return result
     }
 }

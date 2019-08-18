@@ -25,7 +25,7 @@ final class XMLDecoderTests: XCTestCase {
             var some_element: String
         }
         
-        let result = Test.decode(TestStruct.self, from: testXML)
+        let result = try! Test.decode(TestStruct.self, from: testXML)
         XCTAssertEqual(result.integer_element, 42)
         XCTAssertEqual(result.string_element, "   moof   & < >   ")
         XCTAssertEqual(result.embedded_element.some_element, "inside")
@@ -33,8 +33,70 @@ final class XMLDecoderTests: XCTestCase {
         XCTAssertEqual(result.int_array, [1, 2, 3])
     }
     
+    func testAttributes() {
+        struct EnclosingStruct: Decodable {
+            var container: AttributesStruct
+            var top_attribute: String
+            
+            private enum CodingKeys: String, CodingKey, XMLTypedKey {
+                case container
+                case top_attribute
+                
+                var nodeType: XMLNodeType {
+                    switch self {
+                    case .top_attribute:
+                        return .attribute
+                    default:
+                        return .element
+                    }
+                }
+            }
+        }
+        
+        struct AttributesStruct: Decodable {
+            var element: String
+            var attribute: String
+            var inlineText: String
+            var number: Int
+            
+            private enum CodingKeys: String, CodingKey, XMLTypedKey {
+                case element
+                case attribute
+                case inlineText
+                case number
+                
+                var nodeType: XMLNodeType {
+                    switch self {
+                    case .attribute:
+                        return .attribute
+                    case .inlineText:
+                        return .inline
+                    default:
+                        return .element
+                    }
+                }
+            }
+        }
+        
+        let validXML = """
+        <root top_attribute="top"><container attribute="attr"><element>elem</element>text<number>42</number></container></root>
+        """
+        let result = try! Test.decode(EnclosingStruct.self, from: validXML)
+        XCTAssertEqual(result.top_attribute, "top")
+        XCTAssertEqual(result.container.element, "elem")
+        XCTAssertEqual(result.container.attribute, "attr")
+        XCTAssertEqual(result.container.inlineText, "text")
+        XCTAssertEqual(result.container.number, 42)
+        
+        let invalidXML1 = """
+        <root top_attribute="top"><container><attribute>attr</attribute><element>elem</element>text<number>42</number></container></root>
+        """
+        XCTAssertThrowsError(try Test.decode(EnclosingStruct.self, from: invalidXML1))
+    }
+    
     static var allTests = [
         ("testDecodeBasicXML", testDecodeBasicXML),
+        ("testAttributes", testAttributes),
     ]
 }
 
