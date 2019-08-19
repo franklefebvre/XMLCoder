@@ -3,20 +3,8 @@ import XCTest
 
 final class XMLCoderTests: XCTestCase {
     func testEncodeBasicXML() {
-		struct TestStruct: Encodable {
-			var integer_element: Int
-			var string_element: String
-			var embedded_element: EmbeddedStruct
-			var string_array: [String]
-			var int_array: [Int]
-		}
-
-		struct EmbeddedStruct: Encodable {
-			var some_element: String
-		}
-
-		let embedded = EmbeddedStruct(some_element: "inside")
-		let value = TestStruct(integer_element: 42, string_element: "   moof   & < >   ", embedded_element: embedded, string_array: ["one", "two", "three"], int_array: [1, 2, 3])
+		let embedded = BasicEmbeddedStruct(some_element: "inside")
+		let value = BasicTestStruct(integer_element: 42, string_element: "   moof   & < >   ", embedded_element: embedded, string_array: ["one", "two", "three"], int_array: [1, 2, 3])
 
 		let result = Test.xmlString(value)
 		
@@ -34,52 +22,8 @@ final class XMLCoderTests: XCTestCase {
     }
     
     func testAttributes() {
-        struct EnclosingStruct: Encodable {
-            var container: AttributesStruct
-            var top_attribute: String
-            
-            private enum CodingKeys: String, CodingKey, XMLTypedKey {
-                case container
-                case top_attribute
-                
-                var nodeType: XMLNodeType {
-                    switch self {
-                    case .top_attribute:
-                        return .attribute
-                    default:
-                        return .element
-                    }
-                }
-            }
-        }
-            
-        struct AttributesStruct: Encodable {
-            var element: String
-            var attribute: String
-            var inlineText: String
-            var number: Int
-            
-            private enum CodingKeys: String, CodingKey, XMLTypedKey {
-                case element
-                case attribute
-                case inlineText
-                case number
-                
-                var nodeType: XMLNodeType {
-                    switch self {
-                    case .attribute:
-                        return .attribute
-                    case .inlineText:
-                        return .inline
-                    default:
-                        return .element
-                    }
-                }
-            }
-        }
-        
         let contents = AttributesStruct(element: "elem", attribute: "attr", inlineText: "text", number: 42)
-        let value = EnclosingStruct(container: contents, top_attribute: "top")
+        let value = AttributesEnclosingStruct(container: contents, top_attribute: "top")
         
         let result = Test.xmlString(value)
         
