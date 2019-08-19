@@ -1,7 +1,7 @@
 import XCTest
 @testable import XMLCoder
 
-final class XMLCoderTests: XCTestCase {
+final class XMLEncoderTests: XCTestCase {
     func testEncodeBasicXML() {
 		let embedded = BasicEmbeddedStruct(some_element: "inside")
 		let value = BasicTestStruct(integer_element: 42, string_element: "   moof   & < >   ", embedded_element: embedded, string_array: ["one", "two", "three"], int_array: [1, 2, 3])
