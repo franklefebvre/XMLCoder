@@ -40,26 +40,6 @@ final class XMLEncoderTests: XCTestCase {
         XCTAssertEqual(jsonResult, jsonExpected)
     }
     
-    struct NamespaceStruct: Encodable {
-        var with_namespace: String
-        var without_namespace: String
-        
-        private enum CodingKeys: String, CodingKey, XMLQualifiedKey {
-            case with_namespace
-            case without_namespace
-            
-            var namespace: String? {
-                switch(self) {
-                case .with_namespace:
-                    return "http://some.url.example.com/whatever"
-                default:
-                    return nil
-                }
-            }
-        }
-        // extension declaration wouldn't work here (not file scope).
-    }
-    
     func testNamespaces() {
         let value = NamespaceStruct(with_namespace: "test1", without_namespace: "test2")
         

@@ -2,7 +2,7 @@ import XCTest
 @testable import XMLCoder
 
 final class XMLDecoderTests: XCTestCase {
-    func testDecodeBasicXML() {
+    func testDecodeBasicXML() throws {
         let testXML = """
         <root>\
         <integer_element>42</integer_element>\
@@ -13,7 +13,7 @@ final class XMLDecoderTests: XCTestCase {
         </root>
         """
         
-        let result = try! Test.decode(BasicTestStruct.self, from: testXML)
+        let result = try Test.decode(BasicTestStruct.self, from: testXML)
         XCTAssertEqual(result.integer_element, 42)
         XCTAssertEqual(result.string_element, "   moof   & < >   ")
         XCTAssertEqual(result.embedded_element.some_element, "inside")
@@ -21,26 +21,83 @@ final class XMLDecoderTests: XCTestCase {
         XCTAssertEqual(result.int_array, [1, 2, 3])
     }
     
-    func testAttributes() {
-        let validXML = """
+    func testAttributes() throws {
+        let xml = """
         <root top_attribute="top"><container attribute="attr"><element>elem</element>text<number>42</number></container></root>
         """
-        let result = try! Test.decode(AttributesEnclosingStruct.self, from: validXML)
+        let result = try Test.decode(AttributesEnclosingStruct.self, from: xml)
         XCTAssertEqual(result.top_attribute, "top")
         XCTAssertEqual(result.container.element, "elem")
         XCTAssertEqual(result.container.attribute, "attr")
         XCTAssertEqual(result.container.inlineText, "text")
         XCTAssertEqual(result.container.number, 42)
-        
-        let invalidXML1 = """
+    }
+    
+    func testAttributesError() {
+        let xml = """
         <root top_attribute="top"><container><attribute>attr</attribute><element>elem</element>text<number>42</number></container></root>
         """
-        XCTAssertThrowsError(try Test.decode(AttributesEnclosingStruct.self, from: invalidXML1))
+        XCTAssertThrowsError(try Test.decode(AttributesEnclosingStruct.self, from: xml))
+    }
+    
+    func testNamespaces() throws {
+        let xml = """
+        <root xmlns:ns1="http://some.url.example.com/whatever">\
+        <ns1:with_namespace>test1</ns1:with_namespace>\
+        <without_namespace>test2</without_namespace>\
+        </root>
+        """
+        let result = try Test.decode(NamespaceStruct.self, from: xml)
+        XCTAssertEqual(result.with_namespace, "test1")
+        XCTAssertEqual(result.without_namespace, "test2")
+    }
+    
+    func testNamespacesErrorMissingNamespace() {
+        let xml = """
+        <root xmlns:ns1="http://some.url.example.com/whatever">\
+        <with_namespace>test1</with_namespace>\
+        <without_namespace>test2</without_namespace>\
+        </root>
+        """
+        XCTAssertThrowsError(try Test.decode(NamespaceStruct.self, from: xml))
+    }
+    
+    func testNamespacesErrorUnexpectedNamespace() {
+        let xml = """
+        <root xmlns:ns1="http://some.url.example.com/whatever">\
+        <ns1:with_namespace>test1</ns1:with_namespace>\
+        <ns1:without_namespace>test2</ns1:without_namespace>\
+        </root>
+        """
+        XCTAssertThrowsError(try Test.decode(NamespaceStruct.self, from: xml))
+    }
+    
+    func testNamespacesWithOptions() throws {
+        let xml = """
+        <root xmlns="http://some.url.example.com/default" xmlns:nsns1="http://some.url.example.com/whatever">\
+        <nsns1:with_namespace>test1</nsns1:with_namespace>\
+        <without_namespace>test2</without_namespace>\
+        </root>
+        """
+        
+        let document = try XMLDocument(xmlString: xml)
+        let decoder = XMLDecoder()
+        decoder.defaultNamespace = "http://some.url.example.com/default"
+        
+        let result = try decoder.decode(NamespaceStruct.self, from: document)
+        
+        XCTAssertEqual(result.with_namespace, "test1")
+        XCTAssertEqual(result.without_namespace, "test2")
     }
     
     static var allTests = [
         ("testDecodeBasicXML", testDecodeBasicXML),
         ("testAttributes", testAttributes),
+        ("testAttributesError", testAttributesError),
+        ("testNamespaces", testNamespaces),
+        ("testNamespacesErrorMissingNamespace", testNamespacesErrorMissingNamespace),
+        ("testNamespacesErrorUnexpectedNamespace", testNamespacesErrorUnexpectedNamespace),
+        ("testNamespacesWithOptions", testNamespacesWithOptions),
     ]
 }
 

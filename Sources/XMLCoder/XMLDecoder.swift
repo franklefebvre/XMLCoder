@@ -138,6 +138,9 @@ open class XMLDecoder {
     /// Contextual user-provided information for use during decoding.
     open var userInfo: [CodingUserInfoKey : Any] = [:]
     
+    /// Namespace options
+    open var defaultNamespace: String? = nil
+    
     /// Options set on the top-level encoder to pass down the decoding hierarchy.
     struct _Options {
         let dateDecodingStrategy: DateDecodingStrategy
@@ -145,6 +148,7 @@ open class XMLDecoder {
         let nonConformingFloatDecodingStrategy: NonConformingFloatDecodingStrategy
         let keyDecodingStrategy: KeyDecodingStrategy
         let userInfo: [CodingUserInfoKey : Any]
+        let defaultNamespace: String?
     }
     
     /// The options set on the top-level decoder.
@@ -153,7 +157,8 @@ open class XMLDecoder {
                         dataDecodingStrategy: dataDecodingStrategy,
                         nonConformingFloatDecodingStrategy: nonConformingFloatDecodingStrategy,
                         keyDecodingStrategy: keyDecodingStrategy,
-                        userInfo: userInfo)
+                        userInfo: userInfo,
+                        defaultNamespace: defaultNamespace)
     }
     
     // MARK: - Constructing a XML Decoder

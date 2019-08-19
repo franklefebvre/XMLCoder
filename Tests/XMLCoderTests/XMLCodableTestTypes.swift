@@ -68,3 +68,26 @@ struct AttributesStruct: Codable {
     }
 }
 
+// Namespaces
+
+struct NamespaceStruct: Codable {
+    var with_namespace: String
+    var without_namespace: String
+    
+    private enum CodingKeys: String, CodingKey, XMLQualifiedKey {
+        case with_namespace
+        case without_namespace
+        
+        var namespace: String? {
+            switch(self) {
+            case .with_namespace:
+                return "http://some.url.example.com/whatever"
+            default:
+                return nil
+            }
+        }
+    }
+    // extension declaration wouldn't work here (not file scope).
+}
+
+

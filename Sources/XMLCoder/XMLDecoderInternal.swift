@@ -89,8 +89,15 @@ class _XMLDecoder: Decoder {
             for child in container.children ?? [] {
                 switch child.kind {
                 case .element:
-                    if let name = child.name {
-                        elements[name] = child
+                    if let localName = child.localName {
+                        let qualifiedName: String
+                        if let namespace = child.uri {
+                            qualifiedName = "\(namespace):\(localName)"
+                        }
+                        else {
+                            qualifiedName = localName
+                        }
+                        elements[qualifiedName] = child
                     }
                 case .attribute:
                     if let name = child.name {
@@ -127,14 +134,26 @@ class _XMLDecoder: Decoder {
             fatalError()
         }
         
+        func qualifiedName(forKey key: CodingKey) -> String {
+            let localName = key.stringValue
+            if let qualifiedKey = key as? XMLQualifiedKey, let namespace = qualifiedKey.namespace {
+                return "\(namespace):\(localName)"
+            }
+            if let namespace = self.decoder.options.defaultNamespace {
+                return "\(namespace):\(localName)"
+            }
+            return localName
+        }
+        
         func node(forKey key: Key) -> XMLNode? {
             switch _nodeType(key) {
             case .element:
-                return elements[key.stringValue]
+                let qualifiedKey = qualifiedName(forKey: key)
+                return elements[qualifiedKey]
             case .attribute:
                 return attributes[key.stringValue]
             case .inline:
-                return textNodes.first
+                return textNodes.first // TODO: use index
             case .array(_):
                 return nil
             }
