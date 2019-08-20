@@ -86,25 +86,6 @@ final class XMLEncoderTests: XCTestCase {
     }
     
     func testArrayWithKeyedStringElements() {
-        struct ArrayStruct: Encodable {
-            var string: String
-            var children: [String]
-            
-            private enum CodingKeys: String, CodingKey, XMLTypedKey {
-                case string
-                case children
-                
-                var nodeType: XMLNodeType {
-                    switch self {
-                    case .children:
-                        return .array("child")
-                    default:
-                        return .element
-                    }
-                }
-            }
-        }
-        
         let value = ArrayStruct(string: "some text", children: ["one", "two", "three", "four"])
         
         let result = Test.xmlString(value)

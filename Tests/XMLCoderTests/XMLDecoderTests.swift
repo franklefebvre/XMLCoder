@@ -90,6 +90,32 @@ final class XMLDecoderTests: XCTestCase {
         XCTAssertEqual(result.without_namespace, "test2")
     }
     
+    func testArrayWithKeyedStringElements() throws {
+        let xml = """
+        <root>\
+        <string>some text</string>\
+        <children><child>one</child><child>two</child><child>three</child><child>four</child></children>\
+        </root>
+        """
+        
+        let result = try Test.decode(ArrayStruct.self, from: xml)
+        XCTAssertEqual(result.string, "some text")
+        XCTAssertEqual(result.children, ["one", "two", "three", "four"])
+    }
+    
+    func testArrayWithKeyedStringElementsUnexpectedKeys() throws {
+        let xml = """
+        <root>\
+        <string>some text</string>\
+        <children><bad>one</bad><bad>two</bad><bad>three</bad><bad>four</bad></children>\
+        </root>
+        """
+        
+        let result = try Test.decode(ArrayStruct.self, from: xml)
+        XCTAssertEqual(result.string, "some text")
+        XCTAssertEqual(result.children, [])
+    }
+    
     static var allTests = [
         ("testDecodeBasicXML", testDecodeBasicXML),
         ("testAttributes", testAttributes),
@@ -98,6 +124,8 @@ final class XMLDecoderTests: XCTestCase {
         ("testNamespacesErrorMissingNamespace", testNamespacesErrorMissingNamespace),
         ("testNamespacesErrorUnexpectedNamespace", testNamespacesErrorUnexpectedNamespace),
         ("testNamespacesWithOptions", testNamespacesWithOptions),
+        ("testArrayWithKeyedStringElements", testArrayWithKeyedStringElements),
+        ("testArrayWithKeyedStringElementsUnexpectedKeys", testArrayWithKeyedStringElementsUnexpectedKeys),
     ]
 }
 

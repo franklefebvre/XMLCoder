@@ -308,8 +308,8 @@ class _XMLDecoder: Decoder {
         /// A reference to the decoder we're reading from.
         private let decoder: _XMLDecoder
         
-        /// A reference to the container we're reading from.
-        private let container: XMLNodeWrapper
+        /// The container's filtered children nodes.
+        private var elements: [XMLNode]
         
         /// The path of coding keys taken to get to this point in decoding.
         var codingPath: [CodingKey]
@@ -321,15 +321,27 @@ class _XMLDecoder: Decoder {
         /// Initializes `self` by referencing the given decoder and container.
         fileprivate init(referencing decoder: _XMLDecoder, wrapping container: XMLNodeWrapper) {
             self.decoder = decoder
-            self.container = container
             self.codingPath = decoder.codingPath
             self.currentIndex = 0
+            let elementName = container.elementName ?? "element" // TODO: default value in decoder options
+            if let children = container.node.children {
+                self.elements = children.filter {
+                    node in
+                    guard let name = node.name else {
+                        return false
+                    }
+                    return name == elementName
+                }
+            }
+            else {
+                self.elements = []
+            }
         }
         
         // MARK: - UnkeyedDecodingContainer Methods
         
         public var count: Int? {
-            return self.container.node.childCount // TODO: filter children by type (element) and name (given in CodingKeys)
+            return self.elements.count
         }
         
         public var isAtEnd: Bool {
@@ -340,10 +352,7 @@ class _XMLDecoder: Decoder {
             guard !self.isAtEnd else {
                 throw DecodingError.valueNotFound(String.self, DecodingError.Context(codingPath: self.decoder.codingPath, debugDescription: "Unkeyed container is at end."))
             }
-            guard let node = self.container.node.child(at: self.currentIndex) else {
-                throw DecodingError.valueNotFound(String.self, DecodingError.Context(codingPath: self.decoder.codingPath, debugDescription: "Unkeyed container is at end."))
-            }
-            return node.stringValue
+            return self.elements[currentIndex].stringValue
         }
         
         mutating func decodeNil() throws -> Bool {
@@ -482,9 +491,7 @@ class _XMLDecoder: Decoder {
             guard !self.isAtEnd else {
                 throw DecodingError.valueNotFound(type, DecodingError.Context(codingPath: self.decoder.codingPath, debugDescription: "Unkeyed container is at end."))
             }
-            guard let node = self.container.node.child(at: self.currentIndex) else {
-                throw DecodingError.valueNotFound(type, DecodingError.Context(codingPath: self.decoder.codingPath, debugDescription: "Unkeyed container is at end."))
-            }
+            let node = self.elements[self.currentIndex]
             let nodeWrapper = XMLNodeWrapper(node: node, elementName: nil)
             guard let value = try decoder.unboxElement(nodeWrapper, as: type) else {
                 fatalError()

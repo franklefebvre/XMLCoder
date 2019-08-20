@@ -90,4 +90,24 @@ struct NamespaceStruct: Codable {
     // extension declaration wouldn't work here (not file scope).
 }
 
+// Arrays
+
+struct ArrayStruct: Codable {
+    var string: String
+    var children: [String]
+    
+    private enum CodingKeys: String, CodingKey, XMLTypedKey {
+        case string
+        case children
+        
+        var nodeType: XMLNodeType {
+            switch self {
+            case .children:
+                return .array("child")
+            default:
+                return .element
+            }
+        }
+    }
+}
 
