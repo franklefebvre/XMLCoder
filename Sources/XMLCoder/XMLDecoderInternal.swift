@@ -38,7 +38,7 @@ class _XMLDecoder: Decoder {
     // MARK: - Decoder Methods
     
     func container<Key>(keyedBy type: Key.Type) throws -> KeyedDecodingContainer<Key> where Key : CodingKey {
-        guard let element = storage.topContainer as? XMLElement else {
+        guard let element = storage.topContainer.node as? XMLElement else {
             fatalError() // TODO: throw
         }
         // codingPath...
@@ -145,17 +145,30 @@ class _XMLDecoder: Decoder {
             return localName
         }
         
-        func node(forKey key: Key) -> XMLNode? {
+        func node(forKey key: Key) -> XMLNodeWrapper? {
             switch _nodeType(key) {
             case .element:
                 let qualifiedKey = qualifiedName(forKey: key)
-                return elements[qualifiedKey]
+                guard let node = elements[qualifiedKey] else {
+                    return nil
+                }
+                return XMLNodeWrapper(node: node, elementName: nil)
             case .attribute:
-                return attributes[key.stringValue]
+                guard let node = attributes[key.stringValue] else {
+                    return nil
+                }
+                return XMLNodeWrapper(node: node, elementName: nil)
             case .inline:
-                return textNodes.first // TODO: use index
-            case .array(_):
-                return nil
+                guard let node = textNodes.first else { // TODO: use index
+                    return nil
+                }
+                return XMLNodeWrapper(node: node, elementName: nil)
+            case .array(let elementName):
+                let qualifiedKey = qualifiedName(forKey: key)
+                guard let node = elements[qualifiedKey] else {
+                    return nil
+                }
+                return XMLNodeWrapper(node: node, elementName: elementName)
             }
         }
         
@@ -167,11 +180,11 @@ class _XMLDecoder: Decoder {
             fatalError()
         }
         
-        func decode(_ type: String.Type, forKey key: Key) throws -> String { // TODO: decodeStringElement, decodeStringAttribute
-            guard let node = node(forKey: key) else {
+        func decode(_ type: String.Type, forKey key: Key) throws -> String {
+            guard let nodeWrapper = node(forKey: key) else {
                 throw DecodingError.valueNotFound(type, DecodingError.Context(codingPath: self.decoder.codingPath, debugDescription: "No value associated with key \(key.stringValue)."))
             }
-            return node.stringValue ?? ""
+            return nodeWrapper.node.stringValue ?? ""
         }
         
         func decode(_ type: Double.Type, forKey key: Key) throws -> Double {
@@ -296,7 +309,7 @@ class _XMLDecoder: Decoder {
         private let decoder: _XMLDecoder
         
         /// A reference to the container we're reading from.
-        private let container: XMLNode
+        private let container: XMLNodeWrapper
         
         /// The path of coding keys taken to get to this point in decoding.
         var codingPath: [CodingKey]
@@ -306,7 +319,7 @@ class _XMLDecoder: Decoder {
         // MARK: - Initialization
         
         /// Initializes `self` by referencing the given decoder and container.
-        fileprivate init(referencing decoder: _XMLDecoder, wrapping container: XMLNode) {
+        fileprivate init(referencing decoder: _XMLDecoder, wrapping container: XMLNodeWrapper) {
             self.decoder = decoder
             self.container = container
             self.codingPath = decoder.codingPath
@@ -316,7 +329,7 @@ class _XMLDecoder: Decoder {
         // MARK: - UnkeyedDecodingContainer Methods
         
         public var count: Int? {
-            return self.container.childCount // TODO: filter children by type (element) and name (given in CodingKeys)
+            return self.container.node.childCount // TODO: filter children by type (element) and name (given in CodingKeys)
         }
         
         public var isAtEnd: Bool {
@@ -327,7 +340,7 @@ class _XMLDecoder: Decoder {
             guard !self.isAtEnd else {
                 throw DecodingError.valueNotFound(String.self, DecodingError.Context(codingPath: self.decoder.codingPath, debugDescription: "Unkeyed container is at end."))
             }
-            guard let node = self.container.child(at: self.currentIndex) else {
+            guard let node = self.container.node.child(at: self.currentIndex) else {
                 throw DecodingError.valueNotFound(String.self, DecodingError.Context(codingPath: self.decoder.codingPath, debugDescription: "Unkeyed container is at end."))
             }
             return node.stringValue
@@ -469,10 +482,11 @@ class _XMLDecoder: Decoder {
             guard !self.isAtEnd else {
                 throw DecodingError.valueNotFound(type, DecodingError.Context(codingPath: self.decoder.codingPath, debugDescription: "Unkeyed container is at end."))
             }
-            guard let node = self.container.child(at: self.currentIndex) else {
+            guard let node = self.container.node.child(at: self.currentIndex) else {
                 throw DecodingError.valueNotFound(type, DecodingError.Context(codingPath: self.decoder.codingPath, debugDescription: "Unkeyed container is at end."))
             }
-            guard let value = try decoder.unboxElement(node, as: type) else {
+            let nodeWrapper = XMLNodeWrapper(node: node, elementName: nil)
+            guard let value = try decoder.unboxElement(nodeWrapper, as: type) else {
                 fatalError()
             }
             self.currentIndex += 1
@@ -503,7 +517,7 @@ extension _XMLDecoder: SingleValueDecodingContainer {
     }
     
     func decode(_ type: String.Type) throws -> String {
-        let node = self.storage.topContainer
+        let node = self.storage.topContainer.node
         return node.stringValue ?? ""
     }
     
@@ -601,8 +615,8 @@ extension _XMLDecoder: SingleValueDecodingContainer {
 }
 
 extension _XMLDecoder {
-    func unboxElement<T : Decodable>(_ value: XMLNode, as type: T.Type) throws -> T? {
-        self.storage.push(node: value)
+    func unboxElement<T : Decodable>(_ value: XMLNodeWrapper, as type: T.Type) throws -> T? {
+        self.storage.push(value)
         defer { _ = self.storage.pop() }
         return try type.init(from: self)
     }

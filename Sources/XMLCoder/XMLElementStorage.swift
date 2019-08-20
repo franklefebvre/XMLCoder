@@ -135,18 +135,27 @@ protocol XMLArrayKey {
 
 // MARK: Decoding
 
+struct XMLNodeWrapper {
+    let node: XMLNode
+    let elementName: String?
+}
+
 class XMLDecodingStorage {
-    private var stack: [XMLNode] = []
+    private var stack: [XMLNodeWrapper] = []
     
-    func push(node: XMLNode) {
+    func push(_ node: XMLNodeWrapper) {
         stack.append(node)
     }
     
-    func pop() -> XMLNode {
+    func push(node: XMLNode) {
+        push(XMLNodeWrapper(node: node, elementName: nil))
+    }
+    
+    func pop() -> XMLNodeWrapper {
         return stack.removeLast()
     }
     
-    var topContainer: XMLNode {
+    var topContainer: XMLNodeWrapper {
         get {
             return stack.last!
         }
