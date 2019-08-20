@@ -116,6 +116,130 @@ final class XMLDecoderTests: XCTestCase {
         XCTAssertEqual(result.children, [])
     }
     
+    func testArrayWithAttributes() throws {
+        let xml = """
+        <root>\
+        <element id="1">one</element>\
+        <element id="2">two</element>\
+        <element id="3">three</element>\
+        <element id="4">four</element>\
+        </root>
+        """
+        
+        let result = try Test.decode([ArrayElementStruct].self, from: xml)
+        XCTAssertEqual(result.count, 4)
+        XCTAssertEqual(result[0].id, "1")
+        XCTAssertEqual(result[0].inlineText, "one")
+        XCTAssertEqual(result[1].id, "2")
+        XCTAssertEqual(result[1].inlineText, "two")
+        XCTAssertEqual(result[2].id, "3")
+        XCTAssertEqual(result[2].inlineText, "three")
+        XCTAssertEqual(result[3].id, "4")
+        XCTAssertEqual(result[3].inlineText, "four")
+    }
+    
+    // Not implemented yet...
+    #if false
+    func testArrayWithAlternatingKeysAndValues() throws {
+        let xml = """
+        <root><array>\
+        <key>one</key>\
+        <value type="string">value 1</value>\
+        <key>two</key>\
+        <value type="integer">2</value>\
+        </array></root>
+        """
+        
+        let result = try Test.decode(AlternatingRoot.self, from: xml)
+        XCTAssertEqual(result.array.count, 2)
+        if (result.array.count == 2) {
+            XCTAssertEqual(result.array[0].key.value, "one")
+            XCTAssertEqual(result.array[0].value.type, "string")
+            XCTAssertEqual(result.array[0].value.value, "value 1")
+            XCTAssertEqual(result.array[1].key.value, "two")
+            XCTAssertEqual(result.array[1].value.type, "integer")
+            XCTAssertEqual(result.array[1].value.value, "2")
+        }
+    }
+    #endif
+    
+    func testArrayOfStructs() throws {
+        let xml = """
+        <root>\
+        <element><field1>first.1</field1><field2>first.2</field2></element>\
+        <element><field1>second.1</field1><field2>second.2</field2></element>\
+        <element><field1>third.1</field1><field2>third.2</field2></element>\
+        </root>
+        """
+        
+        let result = try Test.decode([ArrayElement].self, from: xml)
+        XCTAssertEqual(result.count, 3)
+        if (result.count == 3) {
+            XCTAssertEqual(result[0].field1, "first.1")
+            XCTAssertEqual(result[0].field2, "first.2")
+            XCTAssertEqual(result[1].field1, "second.1")
+            XCTAssertEqual(result[1].field2, "second.2")
+            XCTAssertEqual(result[2].field1, "third.1")
+            XCTAssertEqual(result[2].field2, "third.2")
+        }
+    }
+    
+    func testArrayOfArrays() throws {
+        let xml = """
+        <root>\
+        <element><element>11</element><element>12</element><element>13</element></element>\
+        <element><element>21</element><element>22</element><element>23</element></element>\
+        <element><element>31</element><element>32</element><element>33</element></element>\
+        <element><element>42</element></element>\
+        </root>
+        """
+        
+        let result = try Test.decode([[String]].self, from: xml)
+        
+        let expected: [[String]] = [
+            ["11", "12", "13"],
+            ["21", "22", "23"],
+            ["31", "32", "33"],
+            ["42"],
+        ]
+        XCTAssertEqual(result, expected)
+    }
+    
+    func testNilAsMissing() throws {
+        let xml = """
+        <root mandatoryAttribute="attr">\
+        <mandatoryElement>elem</mandatoryElement>\
+        </root>
+        """
+        
+        let result = try Test.decode(OptionalStruct.self, from: xml)
+        
+        XCTAssertNil(result.optionalAttribute)
+        XCTAssertEqual(result.mandatoryAttribute, "attr")
+        XCTAssertNil(result.optionalElement)
+        XCTAssertEqual(result.mandatoryElement, "elem")
+    }
+    
+    func testNilAsEmpty() throws {
+        let xml = """
+        <root optionalAttribute="" mandatoryAttribute="attr">\
+        <optionalElement></optionalElement>\
+        <mandatoryElement>elem</mandatoryElement>\
+        </root>
+        """
+        
+        let document = try XMLDocument(xmlString: xml)
+        let decoder = XMLDecoder()
+        decoder.nilDecodingStrategy = .empty
+        
+        let result = try decoder.decode(OptionalStruct.self, from: document)
+        
+        XCTAssertNil(result.optionalAttribute)
+        XCTAssertEqual(result.mandatoryAttribute, "attr")
+        XCTAssertNil(result.optionalElement)
+        XCTAssertEqual(result.mandatoryElement, "elem")
+    }
+    
     static var allTests = [
         ("testDecodeBasicXML", testDecodeBasicXML),
         ("testAttributes", testAttributes),
@@ -126,6 +250,12 @@ final class XMLDecoderTests: XCTestCase {
         ("testNamespacesWithOptions", testNamespacesWithOptions),
         ("testArrayWithKeyedStringElements", testArrayWithKeyedStringElements),
         ("testArrayWithKeyedStringElementsUnexpectedKeys", testArrayWithKeyedStringElementsUnexpectedKeys),
+        ("testArrayWithAttributes", testArrayWithAttributes),
+//        ("testArrayWithAlternatingKeysAndValues", testArrayWithAlternatingKeysAndValues),
+        ("testArrayOfStructs", testArrayOfStructs),
+        ("testArrayOfArrays", testArrayOfArrays),
+        ("testNilAsMissing", testNilAsMissing),
+        ("testNilAsEmpty", testNilAsEmpty),
     ]
 }
 

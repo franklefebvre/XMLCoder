@@ -123,6 +123,14 @@ open class XMLDecoder {
         }
     }
     
+    /// The strategy to use for decoding optional elements and attributes.
+    public enum NilDecodingStrategy {
+        /// Decode missing attribute or element as nil. This is the default strategy.
+        case missing
+        /// Decode empty string as nil.
+        case empty
+    }
+    
     /// The strategy to use in decoding dates. Defaults to `.deferredToDate`.
     open var dateDecodingStrategy: DateDecodingStrategy = .deferredToDate
     
@@ -134,6 +142,9 @@ open class XMLDecoder {
     
     /// The strategy to use for decoding keys. Defaults to `.useDefaultKeys`.
     open var keyDecodingStrategy: KeyDecodingStrategy = .useDefaultKeys
+    
+    /// The strategy to use for decoding optionals. Defaults to `.missing`.
+    open var nilDecodingStrategy: NilDecodingStrategy = .missing
     
     /// Contextual user-provided information for use during decoding.
     open var userInfo: [CodingUserInfoKey : Any] = [:]
@@ -147,6 +158,7 @@ open class XMLDecoder {
         let dataDecodingStrategy: DataDecodingStrategy
         let nonConformingFloatDecodingStrategy: NonConformingFloatDecodingStrategy
         let keyDecodingStrategy: KeyDecodingStrategy
+        let nilDecodingStrategy: NilDecodingStrategy
         let userInfo: [CodingUserInfoKey : Any]
         let defaultNamespace: String?
     }
@@ -157,6 +169,7 @@ open class XMLDecoder {
                         dataDecodingStrategy: dataDecodingStrategy,
                         nonConformingFloatDecodingStrategy: nonConformingFloatDecodingStrategy,
                         keyDecodingStrategy: keyDecodingStrategy,
+                        nilDecodingStrategy: nilDecodingStrategy,
                         userInfo: userInfo,
                         defaultNamespace: defaultNamespace)
     }

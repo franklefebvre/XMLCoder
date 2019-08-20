@@ -111,3 +111,91 @@ struct ArrayStruct: Codable {
     }
 }
 
+struct ArrayElementStruct: Codable {
+    var id: String
+    var inlineText: String
+    
+    private enum CodingKeys: String, CodingKey, XMLTypedKey {
+        case id
+        case inlineText
+        
+        var nodeType: XMLNodeType {
+            switch self {
+            case .id:
+                return .attribute
+            case .inlineText:
+                return .inline
+            }
+        }
+    }
+}
+
+struct AlternatingKeyElement: Codable {
+    let value: String
+    private enum CodingKeys: String, CodingKey, XMLTypedKey {
+        case value
+        var nodeType: XMLNodeType {
+            return .inline
+        }
+    }
+}
+struct AlternatingValueElement: Codable {
+    let type: String
+    let value: String
+    private enum CodingKeys: String, CodingKey, XMLTypedKey {
+        case type
+        case value
+        var nodeType: XMLNodeType {
+            switch self {
+            case .type:
+                return .attribute
+            case .value:
+                return .inline
+            }
+        }
+    }
+}
+struct AlternatingArrayElement: Codable {
+    let key: AlternatingKeyElement
+    let value: AlternatingValueElement
+}
+struct AlternatingRoot: Codable { // TODO: conform encoder root to TypedKey, so that Root can be defined as [AlternatingArrayElement]
+    let array: [AlternatingArrayElement]
+    private enum CodingKeys: String, CodingKey, XMLTypedKey {
+        case array
+        var nodeType: XMLNodeType {
+            return .array(nil)
+        }
+    }
+}
+
+struct ArrayElement: Codable {
+    let field1: String
+    let field2: String
+}
+
+// Optionals
+
+struct OptionalStruct: Codable {
+    var optionalAttribute: String?
+    var mandatoryAttribute: String
+    var optionalElement: String?
+    var mandatoryElement: String
+    
+    enum CodingKeys: CodingKey, XMLTypedKey {
+        case optionalAttribute
+        case mandatoryAttribute
+        case optionalElement
+        case mandatoryElement
+        
+        var nodeType: XMLNodeType {
+            switch self {
+            case .optionalAttribute, .mandatoryAttribute:
+                return .attribute
+            default:
+                return .element
+            }
+        }
+    }
+}
+

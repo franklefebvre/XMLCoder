@@ -131,7 +131,15 @@ class _XMLDecoder: Decoder {
         // MARK: KeyedDecodingContainerProtocol Implementation
         
         func contains(_ key: Key) -> Bool {
-            fatalError()
+            switch _nodeType(key) {
+            case .element, .array(_):
+                let qualifiedKey = qualifiedName(forKey: key)
+                return elements[qualifiedKey] != nil
+            case .attribute:
+                return attributes[key.stringValue] != nil
+            case .inline:
+                return textNodes.count != 0 // TODO: use index
+            }
         }
         
         func qualifiedName(forKey key: CodingKey) -> String {
@@ -173,7 +181,15 @@ class _XMLDecoder: Decoder {
         }
         
         func decodeNil(forKey key: Key) throws -> Bool {
-            fatalError()
+            guard let nodeWrapper = node(forKey: key) else {
+                return true
+            }
+            switch decoder.options.nilDecodingStrategy {
+            case .missing:
+                return false
+            case .empty:
+                return nodeWrapper.node.stringValue?.isEmpty ?? true
+            }
         }
         
         func decode(_ type: Bool.Type, forKey key: Key) throws -> Bool {

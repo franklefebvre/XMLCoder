@@ -107,25 +107,6 @@ final class XMLEncoderTests: XCTestCase {
     }
     
     func testArrayWithAttributes() {
-        struct ArrayElementStruct: Encodable {
-            var id: String
-            var inlineText: String
-            
-            private enum CodingKeys: String, CodingKey, XMLTypedKey {
-                case id
-                case inlineText
-                
-                var nodeType: XMLNodeType {
-                    switch self {
-                    case .id:
-                        return .attribute
-                    case .inlineText:
-                        return .inline
-                    }
-                }
-            }
-        }
-        
         let value = [
             ArrayElementStruct(id: "1", inlineText: "one"),
             ArrayElementStruct(id: "2", inlineText: "two"),
@@ -157,48 +138,9 @@ final class XMLEncoderTests: XCTestCase {
     }
     
     func testArrayWithAlternatingKeysAndValues() {
-        struct KeyElement: Encodable {
-            let value: String
-            private enum CodingKeys: String, CodingKey, XMLTypedKey {
-                case value
-                var nodeType: XMLNodeType {
-                    return .inline
-                }
-            }
-        }
-        struct ValueElement: Encodable {
-            let type: String
-            let value: String
-            private enum CodingKeys: String, CodingKey, XMLTypedKey {
-                case type
-                case value
-                var nodeType: XMLNodeType {
-                    switch self {
-                    case .type:
-                        return .attribute
-                    case .value:
-                        return .inline
-                    }
-                }
-            }
-        }
-        struct ArrayElement: Encodable {
-            let key: KeyElement
-            let value: ValueElement
-        }
-        struct Root: Encodable { // TODO: conform encoder root to TypedKey, so that Root can be defined as [ArrayElement]
-            let array: [ArrayElement]
-            private enum CodingKeys: String, CodingKey, XMLTypedKey {
-                case array
-                var nodeType: XMLNodeType {
-                    return .array(nil)
-                }
-            }
-        }
-        
-        let value = Root(array: [
-            ArrayElement(key: KeyElement(value: "one"), value: ValueElement(type: "string", value: "value 1")),
-            ArrayElement(key: KeyElement(value: "two"), value: ValueElement(type: "integer", value: "2")),
+        let value = AlternatingRoot(array: [
+            AlternatingArrayElement(key: AlternatingKeyElement(value: "one"), value: AlternatingValueElement(type: "string", value: "value 1")),
+            AlternatingArrayElement(key: AlternatingKeyElement(value: "two"), value: AlternatingValueElement(type: "integer", value: "2")),
         ])
         
         let result = Test.xmlString(value)
@@ -216,11 +158,6 @@ final class XMLEncoderTests: XCTestCase {
     }
     
     func testArrayOfStructs() {
-        struct ArrayElement: Encodable {
-            let field1: String
-            let field2: String
-        }
-        
         let value = [
             ArrayElement(field1: "first.1", field2: "first.2"),
             ArrayElement(field1: "second.1", field2: "second.2"),
@@ -280,29 +217,6 @@ final class XMLEncoderTests: XCTestCase {
     }
     
     func testNilAsMissing() {
-        struct OptionalStruct: Encodable { // TODO: factorize this struct
-            var optionalAttribute: String?
-            var mandatoryAttribute: String
-            var optionalElement: String?
-            var mandatoryElement: String
-            
-            enum CodingKeys: CodingKey, XMLTypedKey {
-                case optionalAttribute
-                case mandatoryAttribute
-                case optionalElement
-                case mandatoryElement
-                
-                var nodeType: XMLNodeType {
-                    switch self {
-                    case .optionalAttribute, .mandatoryAttribute:
-                        return .attribute
-                    default:
-                        return .element
-                    }
-                }
-            }
-        }
-        
         let value = OptionalStruct(optionalAttribute: nil, mandatoryAttribute: "attr", optionalElement: nil, mandatoryElement: "elem")
         
         let result = Test.xmlString(value)
@@ -316,29 +230,6 @@ final class XMLEncoderTests: XCTestCase {
     }
     
     func testNilAsEmpty() {
-        struct OptionalStruct: Encodable {
-            var optionalAttribute: String?
-            var mandatoryAttribute: String
-            var optionalElement: String?
-            var mandatoryElement: String
-            
-            enum CodingKeys: CodingKey, XMLTypedKey {
-                case optionalAttribute
-                case mandatoryAttribute
-                case optionalElement
-                case mandatoryElement
-                
-                var nodeType: XMLNodeType {
-                    switch self {
-                    case .optionalAttribute, .mandatoryAttribute:
-                        return .attribute
-                    default:
-                        return .element
-                    }
-                }
-            }
-        }
-        
         let value = OptionalStruct(optionalAttribute: nil, mandatoryAttribute: "attr", optionalElement: nil, mandatoryElement: "elem")
         
         let encoder = XMLEncoder()
