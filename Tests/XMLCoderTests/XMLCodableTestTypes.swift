@@ -199,3 +199,18 @@ struct OptionalStruct: Codable {
     }
 }
 
+// Float, Double
+
+struct FloatDoubleStruct: Codable {
+    var f: Float
+    var d: Double
+}
+
+// Bool
+
+struct BoolStruct: Codable {
+    var test: Bool
+    var tests: [Bool]
+}
+
+

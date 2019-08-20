@@ -247,11 +247,6 @@ final class XMLEncoderTests: XCTestCase {
     }
     
     func testFloatAndDouble() {
-        struct FloatDoubleStruct: Encodable {
-            var f: Float
-            var d: Double
-        }
-        
         let value = FloatDoubleStruct(f: 1e-10, d: 1e-15)
         
         let result = Test.xmlString(value)
@@ -290,11 +285,6 @@ final class XMLEncoderTests: XCTestCase {
     }
     
     func testBoolWithDefaultStrategy() {
-        struct BoolStruct: Encodable {
-            var test: Bool
-            var tests: [Bool]
-        }
-        
         let value = BoolStruct(test: true, tests: [false, true, false])
         
         let result = Test.xmlString(value)
@@ -308,11 +298,6 @@ final class XMLEncoderTests: XCTestCase {
     }
     
     func testBoolWithCustomStrategy() {
-        struct BoolStruct: Encodable {
-            var test: Bool
-            var tests: [Bool]
-        }
-        
         let value = BoolStruct(test: true, tests: [false, true, false])
         
         let encoder = XMLEncoder()

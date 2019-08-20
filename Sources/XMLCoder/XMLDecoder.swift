@@ -131,6 +131,12 @@ open class XMLDecoder {
         case empty
     }
     
+    /// The strategy to use for decoding boolean values.
+    public struct BoolDecodingStrategy {
+        let falseValue: String
+        let trueValue: String
+    }
+    
     /// The strategy to use in decoding dates. Defaults to `.deferredToDate`.
     open var dateDecodingStrategy: DateDecodingStrategy = .deferredToDate
     
@@ -146,6 +152,9 @@ open class XMLDecoder {
     /// The strategy to use for decoding optionals. Defaults to `.missing`.
     open var nilDecodingStrategy: NilDecodingStrategy = .missing
     
+    /// The strategy to use for decoding boolean values. Defaults to `0|1`.
+    open var boolDecodingStrategy = BoolDecodingStrategy(falseValue: "0", trueValue: "1")
+    
     /// Contextual user-provided information for use during decoding.
     open var userInfo: [CodingUserInfoKey : Any] = [:]
     
@@ -159,6 +168,7 @@ open class XMLDecoder {
         let nonConformingFloatDecodingStrategy: NonConformingFloatDecodingStrategy
         let keyDecodingStrategy: KeyDecodingStrategy
         let nilDecodingStrategy: NilDecodingStrategy
+        let boolDecodingStrategy: BoolDecodingStrategy
         let userInfo: [CodingUserInfoKey : Any]
         let defaultNamespace: String?
     }
@@ -170,6 +180,7 @@ open class XMLDecoder {
                         nonConformingFloatDecodingStrategy: nonConformingFloatDecodingStrategy,
                         keyDecodingStrategy: keyDecodingStrategy,
                         nilDecodingStrategy: nilDecodingStrategy,
+                        boolDecodingStrategy: boolDecodingStrategy,
                         userInfo: userInfo,
                         defaultNamespace: defaultNamespace)
     }

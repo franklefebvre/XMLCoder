@@ -240,6 +240,52 @@ final class XMLDecoderTests: XCTestCase {
         XCTAssertEqual(result.mandatoryElement, "elem")
     }
     
+    func testFloatAndDouble() throws {
+        let xml = """
+        <root>\
+        <f>0.0000000001</f>\
+        <d>0.000000000000001</d>\
+        </root>
+        """
+        
+        let result = try Test.decode(FloatDoubleStruct.self, from: xml)
+        
+        XCTAssertEqual(result.f, 1e-10)
+        XCTAssertEqual(result.d, 1e-15)
+    }
+    
+    func testBoolWithDefaultStrategy() throws {
+        let xml = """
+        <root>\
+        <test>1</test>\
+        <tests><element>0</element><element>1</element><element>0</element></tests>\
+        </root>
+        """
+        
+        let result = try Test.decode(BoolStruct.self, from: xml)
+        
+        XCTAssertEqual(result.test, true)
+        XCTAssertEqual(result.tests, [false, true, false])
+    }
+    
+    func testBoolWithCustomStrategy() throws {
+        let xml = """
+        <root>\
+        <test>yes</test>\
+        <tests><element>no</element><element>yes</element><element>no</element></tests>\
+        </root>
+        """
+        
+        let document = try XMLDocument(xmlString: xml)
+        let decoder = XMLDecoder()
+        decoder.boolDecodingStrategy = XMLDecoder.BoolDecodingStrategy(falseValue: "no", trueValue: "yes")
+        
+        let result = try decoder.decode(BoolStruct.self, from: document)
+        
+        XCTAssertEqual(result.test, true)
+        XCTAssertEqual(result.tests, [false, true, false])
+    }
+    
     static var allTests = [
         ("testDecodeBasicXML", testDecodeBasicXML),
         ("testAttributes", testAttributes),
@@ -256,6 +302,9 @@ final class XMLDecoderTests: XCTestCase {
         ("testArrayOfArrays", testArrayOfArrays),
         ("testNilAsMissing", testNilAsMissing),
         ("testNilAsEmpty", testNilAsEmpty),
+        ("testFloatAndDouble", testFloatAndDouble),
+        ("testBoolWithDefaultStrategy", testBoolWithDefaultStrategy),
+        ("testBoolWithCustomStrategy", testBoolWithCustomStrategy),
     ]
 }
 
