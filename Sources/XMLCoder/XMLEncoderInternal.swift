@@ -195,7 +195,6 @@ class _XMLEncoder: Encoder {
         }
         
         mutating func encode(_ value: String, forKey key: Key) throws {
-            print("encoding string value \(value) for key \(key)")
             let element = self.encoder.xmlElement(value, withName: _converted(key), nodeType: _nodeType(key))
             self.container.append(node: element)
         }
@@ -203,7 +202,6 @@ class _XMLEncoder: Encoder {
         // TODO: Float, Double, Date, Data
         
         mutating func encode<T>(_ value: T, forKey key: Key) throws where T : Encodable {
-            print("encoding generic value \(value) of type \(T.self) for key \(key)")
             self.encoder.codingPath.append(key)
             defer {
                 self.encoder.codingPath.removeLast()
