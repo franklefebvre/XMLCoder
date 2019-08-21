@@ -287,7 +287,31 @@ class _XMLDecoder: Decoder {
             return try decoder.decodeValue(type, from: string)
         }
         
+        func decodeDate(forKey key: Key) throws -> Date {
+            let string = try decode(String.self, forKey: key)
+            return try decoder.decodeValue(Date.self, from: string)
+        }
+        
+        func decodeData(forKey key: Key) throws -> Data {
+            let string = try decode(String.self, forKey: key)
+            return try decoder.decodeValue(Data.self, from: string)
+        }
+        
+        func decodeURL(forKey key: Key) throws -> URL {
+            let string = try decode(String.self, forKey: key)
+            return try decoder.decodeValue(URL.self, from: string)
+        }
+        
         func decode<T>(_ type: T.Type, forKey key: Key) throws -> T where T : Decodable {
+            if T.self == Date.self {
+                return try decodeDate(forKey: key) as! T
+            }
+            if T.self == Data.self {
+                return try decodeData(forKey: key) as! T
+            }
+            if T.self == URL.self {
+                return try decodeURL(forKey: key) as! T
+            }
             guard let node = node(forKey: key) else {
                 throw DecodingError.valueNotFound(type, DecodingError.Context(codingPath: self.decoder.codingPath, debugDescription: "No value associated with key \(key.stringValue)."))
             }
@@ -492,7 +516,43 @@ class _XMLDecoder: Decoder {
             return value
         }
         
+        mutating func decodeDate() throws -> Date {
+            guard let string = try self.decodeStringAtCurrentIndex() else {
+                throw DecodingError.valueNotFound(Date.self, DecodingError.Context(codingPath: self.decoder.codingPath, debugDescription: "Expected \(Date.self) but found empty node instead."))
+            }
+            let value = try decoder.decodeValue(Date.self, from: string)
+            self.currentIndex += 1
+            return value
+        }
+        
+        mutating func decodeData() throws -> Data {
+            guard let string = try self.decodeStringAtCurrentIndex() else {
+                throw DecodingError.valueNotFound(Data.self, DecodingError.Context(codingPath: self.decoder.codingPath, debugDescription: "Expected \(Data.self) but found empty node instead."))
+            }
+            let value = try decoder.decodeValue(Data.self, from: string)
+            self.currentIndex += 1
+            return value
+        }
+        
+        mutating func decodeURL() throws -> URL {
+            guard let string = try self.decodeStringAtCurrentIndex() else {
+                throw DecodingError.valueNotFound(URL.self, DecodingError.Context(codingPath: self.decoder.codingPath, debugDescription: "Expected \(URL.self) but found empty node instead."))
+            }
+            let value = try decoder.decodeValue(URL.self, from: string)
+            self.currentIndex += 1
+            return value
+        }
+        
         mutating func decode<T>(_ type: T.Type) throws -> T where T : Decodable {
+            if T.self == Date.self {
+                return try decodeDate() as! T
+            }
+            if T.self == Data.self {
+                return try decodeData() as! T
+            }
+            if T.self == URL.self {
+                return try decodeURL() as! T
+            }
             guard !self.isAtEnd else {
                 throw DecodingError.valueNotFound(type, DecodingError.Context(codingPath: self.decoder.codingPath, debugDescription: "Unkeyed container is at end."))
             }
@@ -609,7 +669,31 @@ extension _XMLDecoder: SingleValueDecodingContainer {
         return try decodeValue(type, from: string)
     }
     
+    func decodeDate() throws -> Date {
+        let string = try self.decode(String.self)
+        return try decodeValue(Date.self, from: string)
+    }
+    
+    func decodeData() throws -> Data {
+        let string = try self.decode(String.self)
+        return try decodeValue(Data.self, from: string)
+    }
+    
+    func decodeURL() throws -> URL {
+        let string = try self.decode(String.self)
+        return try decodeValue(URL.self, from: string)
+    }
+    
     func decode<T>(_ type: T.Type) throws -> T where T : Decodable {
+        if T.self == Date.self {
+            return try decodeDate() as! T
+        }
+        if T.self == Data.self {
+            return try decodeData() as! T
+        }
+        if T.self == URL.self {
+            return try decodeURL() as! T
+        }
         return try self.unboxElement(self.storage.topContainer, as: type)!
     }
 }
@@ -710,6 +794,27 @@ extension _XMLDecoder {
     
     func decodeValue(_ type: UInt64.Type, from string: String) throws -> UInt64 {
         guard let value = UInt64(string) else {
+            throw DecodingError.valueNotFound(type, DecodingError.Context(codingPath: self.codingPath, debugDescription: "Could not decode \(type)."))
+        }
+        return value
+    }
+    
+    func decodeValue(_ type: Date.Type, from string: String) throws -> Date {
+        guard let value = dateFormatter.date(from: string) else { // TODO: use DateDecodingStrategy
+            throw DecodingError.valueNotFound(type, DecodingError.Context(codingPath: self.codingPath, debugDescription: "Could not decode \(type)."))
+        }
+        return value
+    }
+    
+    func decodeValue(_ type: Data.Type, from string: String) throws -> Data {
+        guard let value = Data(base64Encoded: string) else { // TODO: use DataDecodingStrategy
+            throw DecodingError.valueNotFound(type, DecodingError.Context(codingPath: self.codingPath, debugDescription: "Could not decode \(type)."))
+        }
+        return value
+    }
+    
+    func decodeValue(_ type: URL.Type, from string: String) throws -> URL {
+        guard let value = URL(string: string) else {
             throw DecodingError.valueNotFound(type, DecodingError.Context(codingPath: self.codingPath, debugDescription: "Could not decode \(type)."))
         }
         return value

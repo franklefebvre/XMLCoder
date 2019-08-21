@@ -260,13 +260,6 @@ final class XMLEncoderTests: XCTestCase {
     }
     
     func testDateAndURL() {
-        struct DateURLStruct: Encodable {
-            var date: Date
-            var dates: [Date]
-            var url: URL
-            var urls: [URL]
-        }
-        
         let date = Date(timeIntervalSince1970: 1)
         let url = URL(string: "https://swift.org/")!
         let value = DateURLStruct(date: date, dates: [date, date], url: url, urls: [url, url])
@@ -315,11 +308,6 @@ final class XMLEncoderTests: XCTestCase {
     }
     
     func testData() {
-        struct DataStruct: Encodable {
-            var element: Data
-            var elements: [Data]
-        }
-        
         let data = Data(bytes: [0x42, 0x00, 0xff])
         let value = DataStruct(element: data, elements: [data, data])
         

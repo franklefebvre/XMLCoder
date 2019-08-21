@@ -254,6 +254,26 @@ final class XMLDecoderTests: XCTestCase {
         XCTAssertEqual(result.d, 1e-15)
     }
     
+    func testDateAndURL() throws {
+        let xml = """
+        <root>\
+        <date>1970-01-01T00:00:00Z</date>\
+        <dates><element>1970-01-01T00:00:00Z</element><element>1970-01-01T00:00:00Z</element></dates>\
+        <url>https://swift.org/</url>\
+        <urls><element>https://swift.org/</element><element>https://swift.org/</element></urls>\
+        </root>
+        """
+        
+        let result = try Test.decode(DateURLStruct.self, from: xml)
+        
+        let date = Date(timeIntervalSince1970: 0)
+        let url = URL(string: "https://swift.org/")!
+        XCTAssertEqual(result.date, date)
+        XCTAssertEqual(result.dates, [date, date])
+        XCTAssertEqual(result.url, url)
+        XCTAssertEqual(result.urls, [url, url])
+    }
+    
     func testBoolWithDefaultStrategy() throws {
         let xml = """
         <root>\
@@ -297,6 +317,21 @@ final class XMLDecoderTests: XCTestCase {
         XCTAssertThrowsError(try Test.decode(BoolStruct.self, from: xml))
     }
     
+    func testData() throws {
+        let xml = """
+        <root>\
+        <element>QgD/</element>\
+        <elements><element>QgD/</element><element>QgD/</element></elements>\
+        </root>
+        """
+        
+        let result = try Test.decode(DataStruct.self, from: xml)
+        
+        let data = Data(bytes: [0x42, 0x00, 0xff])
+        XCTAssertEqual(result.element, data)
+        XCTAssertEqual(result.elements, [data, data])
+    }
+    
     static var allTests = [
         ("testDecodeBasicXML", testDecodeBasicXML),
         ("testAttributes", testAttributes),
@@ -314,9 +349,11 @@ final class XMLDecoderTests: XCTestCase {
         ("testNilAsMissing", testNilAsMissing),
         ("testNilAsEmpty", testNilAsEmpty),
         ("testFloatAndDouble", testFloatAndDouble),
+        ("testDateAndURL", testDateAndURL),
         ("testBoolWithDefaultStrategy", testBoolWithDefaultStrategy),
         ("testBoolWithCustomStrategy", testBoolWithCustomStrategy),
         ("testBoolError", testBoolError),
+        ("testData", testData),
     ]
 }
 

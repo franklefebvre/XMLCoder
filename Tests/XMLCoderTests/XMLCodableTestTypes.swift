@@ -206,11 +206,27 @@ struct FloatDoubleStruct: Codable {
     var d: Double
 }
 
+// Date, URL
+
+struct DateURLStruct: Codable {
+    var date: Date
+    var dates: [Date]
+    var url: URL
+    var urls: [URL]
+}
+
 // Bool
 
 struct BoolStruct: Codable {
     var test: Bool
     var tests: [Bool]
+}
+
+// Data
+
+struct DataStruct: Codable {
+    var element: Data
+    var elements: [Data]
 }
 
 
