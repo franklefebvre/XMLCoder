@@ -229,4 +229,28 @@ struct DataStruct: Codable {
     var elements: [Data]
 }
 
+// Subclassing
+
+class Base: Codable {
+    var base: String = ""
+}
+class Subclass: Base {
+    var sub: String = ""
+    override init() {
+        super.init()
+    }
+    private enum CodingKeys: String, CodingKey {
+        case sub
+    }
+    override func encode(to encoder: Encoder) throws {
+        try super.encode(to: encoder)
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(sub, forKey: .sub)
+    }
+    required init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.sub = try container.decode(String.self, forKey: .sub)
+        try super.init(from: decoder)
+    }
+}
 

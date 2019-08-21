@@ -332,6 +332,20 @@ final class XMLDecoderTests: XCTestCase {
         XCTAssertEqual(result.elements, [data, data])
     }
     
+    func testSubclass() throws {
+        let xml = """
+        <root>\
+        <base>base</base>\
+        <sub>sub</sub>\
+        </root>
+        """
+        
+        let result = try Test.decode(Subclass.self, from: xml)
+        
+        XCTAssertEqual(result.base, "base")
+        XCTAssertEqual(result.sub, "sub")
+    }
+    
     static var allTests = [
         ("testDecodeBasicXML", testDecodeBasicXML),
         ("testAttributes", testAttributes),
@@ -354,6 +368,7 @@ final class XMLDecoderTests: XCTestCase {
         ("testBoolWithCustomStrategy", testBoolWithCustomStrategy),
         ("testBoolError", testBoolError),
         ("testData", testData),
+        ("testSubclass", testSubclass),
     ]
 }
 
