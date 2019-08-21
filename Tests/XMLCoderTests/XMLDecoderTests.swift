@@ -286,6 +286,17 @@ final class XMLDecoderTests: XCTestCase {
         XCTAssertEqual(result.tests, [false, true, false])
     }
     
+    func testBoolError() throws {
+        let xml = """
+        <root>\
+        <test>1</test>\
+        <tests><element>0</element><element>1</element><element>invalid</element></tests>\
+        </root>
+        """
+        
+        XCTAssertThrowsError(try Test.decode(BoolStruct.self, from: xml))
+    }
+    
     static var allTests = [
         ("testDecodeBasicXML", testDecodeBasicXML),
         ("testAttributes", testAttributes),
@@ -305,6 +316,7 @@ final class XMLDecoderTests: XCTestCase {
         ("testFloatAndDouble", testFloatAndDouble),
         ("testBoolWithDefaultStrategy", testBoolWithDefaultStrategy),
         ("testBoolWithCustomStrategy", testBoolWithCustomStrategy),
+        ("testBoolError", testBoolError),
     ]
 }
 

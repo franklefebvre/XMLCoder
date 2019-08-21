@@ -217,13 +217,7 @@ class _XMLDecoder: Decoder {
         
         func decode(_ type: Bool.Type, forKey key: Key) throws -> Bool {
             let string = try decode(String.self, forKey: key)
-            do {
-                let value = try decoder.options.boolDecodingStrategy.bool(from: string)
-                return value
-            }
-            catch {
-                throw DecodingError.typeMismatch(type, DecodingError.Context(codingPath: self.decoder.codingPath, debugDescription: "Could not decode \(type)."))
-            }
+            return try decoder.decodeValue(type, from: string)
         }
         
         func decode(_ type: String.Type, forKey key: Key) throws -> String {
@@ -235,98 +229,62 @@ class _XMLDecoder: Decoder {
         
         func decode(_ type: Double.Type, forKey key: Key) throws -> Double {
             let string = try decode(String.self, forKey: key)
-            guard let number = decoder.doubleFormatter.number(from: string) else {
-                throw DecodingError.valueNotFound(type, DecodingError.Context(codingPath: self.decoder.codingPath, debugDescription: "Could not decode \(type)."))
-            }
-            return number.doubleValue
+            return try decoder.decodeValue(type, from: string)
         }
         
         func decode(_ type: Float.Type, forKey key: Key) throws -> Float {
             let string = try decode(String.self, forKey: key)
-            guard let number = decoder.floatFormatter.number(from: string) else {
-                throw DecodingError.valueNotFound(type, DecodingError.Context(codingPath: self.decoder.codingPath, debugDescription: "Could not decode \(type)."))
-            }
-            return number.floatValue
+            return try decoder.decodeValue(type, from: string)
         }
         
         func decode(_ type: Int.Type, forKey key: Key) throws -> Int {
             let string = try decode(String.self, forKey: key)
-            guard let value = Int(string) else {
-                throw DecodingError.valueNotFound(type, DecodingError.Context(codingPath: self.decoder.codingPath, debugDescription: "Could not decode \(type)."))
-            }
-            return value
+            return try decoder.decodeValue(type, from: string)
         }
         
         func decode(_ type: Int8.Type, forKey key: Key) throws -> Int8 {
             let string = try decode(String.self, forKey: key)
-            guard let value = Int8(string) else {
-                throw DecodingError.valueNotFound(type, DecodingError.Context(codingPath: self.decoder.codingPath, debugDescription: "Could not decode \(type)."))
-            }
-            return value
+            return try decoder.decodeValue(type, from: string)
         }
         
         func decode(_ type: Int16.Type, forKey key: Key) throws -> Int16 {
             let string = try decode(String.self, forKey: key)
-            guard let value = Int16(string) else {
-                throw DecodingError.valueNotFound(type, DecodingError.Context(codingPath: self.decoder.codingPath, debugDescription: "Could not decode \(type)."))
-            }
-            return value
+            return try decoder.decodeValue(type, from: string)
         }
         
         func decode(_ type: Int32.Type, forKey key: Key) throws -> Int32 {
             let string = try decode(String.self, forKey: key)
-            guard let value = Int32(string) else {
-                throw DecodingError.valueNotFound(type, DecodingError.Context(codingPath: self.decoder.codingPath, debugDescription: "Could not decode \(type)."))
-            }
-            return value
+            return try decoder.decodeValue(type, from: string)
         }
         
         func decode(_ type: Int64.Type, forKey key: Key) throws -> Int64 {
             let string = try decode(String.self, forKey: key)
-            guard let value = Int64(string) else {
-                throw DecodingError.valueNotFound(type, DecodingError.Context(codingPath: self.decoder.codingPath, debugDescription: "Could not decode \(type)."))
-            }
-            return value
+            return try decoder.decodeValue(type, from: string)
         }
         
         func decode(_ type: UInt.Type, forKey key: Key) throws -> UInt {
             let string = try decode(String.self, forKey: key)
-            guard let value = UInt(string) else {
-                throw DecodingError.valueNotFound(type, DecodingError.Context(codingPath: self.decoder.codingPath, debugDescription: "Could not decode \(type)."))
-            }
-            return value
+            return try decoder.decodeValue(type, from: string)
         }
         
         func decode(_ type: UInt8.Type, forKey key: Key) throws -> UInt8 {
             let string = try decode(String.self, forKey: key)
-            guard let value = UInt8(string) else {
-                throw DecodingError.valueNotFound(type, DecodingError.Context(codingPath: self.decoder.codingPath, debugDescription: "Could not decode \(type)."))
-            }
-            return value
+            return try decoder.decodeValue(type, from: string)
         }
         
         func decode(_ type: UInt16.Type, forKey key: Key) throws -> UInt16 {
             let string = try decode(String.self, forKey: key)
-            guard let value = UInt16(string) else {
-                throw DecodingError.valueNotFound(type, DecodingError.Context(codingPath: self.decoder.codingPath, debugDescription: "Could not decode \(type)."))
-            }
-            return value
+            return try decoder.decodeValue(type, from: string)
         }
         
         func decode(_ type: UInt32.Type, forKey key: Key) throws -> UInt32 {
             let string = try decode(String.self, forKey: key)
-            guard let value = UInt32(string) else {
-                throw DecodingError.valueNotFound(type, DecodingError.Context(codingPath: self.decoder.codingPath, debugDescription: "Could not decode \(type)."))
-            }
-            return value
+            return try decoder.decodeValue(type, from: string)
         }
         
         func decode(_ type: UInt64.Type, forKey key: Key) throws -> UInt64 {
             let string = try decode(String.self, forKey: key)
-            guard let value = UInt64(string) else {
-                throw DecodingError.valueNotFound(type, DecodingError.Context(codingPath: self.decoder.codingPath, debugDescription: "Could not decode \(type)."))
-            }
-            return value
+            return try decoder.decodeValue(type, from: string)
         }
         
         func decode<T>(_ type: T.Type, forKey key: Key) throws -> T where T : Decodable {
@@ -417,13 +375,7 @@ class _XMLDecoder: Decoder {
             guard let string = try self.decodeStringAtCurrentIndex() else {
                 throw DecodingError.valueNotFound(type, DecodingError.Context(codingPath: self.decoder.codingPath, debugDescription: "Expected \(type) but found empty node instead."))
             }
-            do {
-                let value = try decoder.options.boolDecodingStrategy.bool(from: string)
-                return value
-            }
-            catch {
-                throw DecodingError.typeMismatch(type, DecodingError.Context(codingPath: self.decoder.codingPath, debugDescription: "Could not decode \(type)."))
-            }
+            return try decoder.decodeValue(type, from: string)
         }
         
         mutating func decode(_ type: String.Type) throws -> String {
@@ -436,29 +388,25 @@ class _XMLDecoder: Decoder {
             guard let string = try self.decodeStringAtCurrentIndex() else {
                 throw DecodingError.valueNotFound(type, DecodingError.Context(codingPath: self.decoder.codingPath, debugDescription: "Expected \(type) but found empty node instead."))
             }
-            guard let number = decoder.doubleFormatter.number(from: string) else {
-                throw DecodingError.valueNotFound(type, DecodingError.Context(codingPath: self.decoder.codingPath, debugDescription: "Could not decode \(type)."))
-            }
-            return number.doubleValue
+            let value = try decoder.decodeValue(type, from: string)
+            self.currentIndex += 1
+            return value
         }
         
         mutating func decode(_ type: Float.Type) throws -> Float {
             guard let string = try self.decodeStringAtCurrentIndex() else {
                 throw DecodingError.valueNotFound(type, DecodingError.Context(codingPath: self.decoder.codingPath, debugDescription: "Expected \(type) but found empty node instead."))
             }
-            guard let number = decoder.floatFormatter.number(from: string) else {
-                throw DecodingError.valueNotFound(type, DecodingError.Context(codingPath: self.decoder.codingPath, debugDescription: "Could not decode \(type)."))
-            }
-            return number.floatValue
+            let value = try decoder.decodeValue(type, from: string)
+            self.currentIndex += 1
+            return value
         }
         
         mutating func decode(_ type: Int.Type) throws -> Int {
             guard let string = try self.decodeStringAtCurrentIndex() else {
                 throw DecodingError.valueNotFound(type, DecodingError.Context(codingPath: self.decoder.codingPath, debugDescription: "Expected \(type) but found empty node instead."))
             }
-            guard let value = Int(string) else {
-                throw DecodingError.valueNotFound(type, DecodingError.Context(codingPath: self.decoder.codingPath, debugDescription: "Could not decode \(type)."))
-            }
+            let value = try decoder.decodeValue(type, from: string)
             self.currentIndex += 1
             return value
         }
@@ -467,9 +415,7 @@ class _XMLDecoder: Decoder {
             guard let string = try self.decodeStringAtCurrentIndex() else {
                 throw DecodingError.valueNotFound(type, DecodingError.Context(codingPath: self.decoder.codingPath, debugDescription: "Expected \(type) but found empty node instead."))
             }
-            guard let value = Int8(string) else {
-                throw DecodingError.valueNotFound(type, DecodingError.Context(codingPath: self.decoder.codingPath, debugDescription: "Could not decode \(type)."))
-            }
+            let value = try decoder.decodeValue(type, from: string)
             self.currentIndex += 1
             return value
         }
@@ -478,9 +424,7 @@ class _XMLDecoder: Decoder {
             guard let string = try self.decodeStringAtCurrentIndex() else {
                 throw DecodingError.valueNotFound(type, DecodingError.Context(codingPath: self.decoder.codingPath, debugDescription: "Expected \(type) but found empty node instead."))
             }
-            guard let value = Int16(string) else {
-                throw DecodingError.valueNotFound(type, DecodingError.Context(codingPath: self.decoder.codingPath, debugDescription: "Could not decode \(type)."))
-            }
+            let value = try decoder.decodeValue(type, from: string)
             self.currentIndex += 1
             return value
         }
@@ -489,9 +433,7 @@ class _XMLDecoder: Decoder {
             guard let string = try self.decodeStringAtCurrentIndex() else {
                 throw DecodingError.valueNotFound(type, DecodingError.Context(codingPath: self.decoder.codingPath, debugDescription: "Expected \(type) but found empty node instead."))
             }
-            guard let value = Int32(string) else {
-                throw DecodingError.valueNotFound(type, DecodingError.Context(codingPath: self.decoder.codingPath, debugDescription: "Could not decode \(type)."))
-            }
+            let value = try decoder.decodeValue(type, from: string)
             self.currentIndex += 1
             return value
         }
@@ -500,9 +442,7 @@ class _XMLDecoder: Decoder {
             guard let string = try self.decodeStringAtCurrentIndex() else {
                 throw DecodingError.valueNotFound(type, DecodingError.Context(codingPath: self.decoder.codingPath, debugDescription: "Expected \(type) but found empty node instead."))
             }
-            guard let value = Int64(string) else {
-                throw DecodingError.valueNotFound(type, DecodingError.Context(codingPath: self.decoder.codingPath, debugDescription: "Could not decode \(type)."))
-            }
+            let value = try decoder.decodeValue(type, from: string)
             self.currentIndex += 1
             return value
         }
@@ -511,9 +451,7 @@ class _XMLDecoder: Decoder {
             guard let string = try self.decodeStringAtCurrentIndex() else {
                 throw DecodingError.valueNotFound(type, DecodingError.Context(codingPath: self.decoder.codingPath, debugDescription: "Expected \(type) but found empty node instead."))
             }
-            guard let value = UInt(string) else {
-                throw DecodingError.valueNotFound(type, DecodingError.Context(codingPath: self.decoder.codingPath, debugDescription: "Could not decode \(type)."))
-            }
+            let value = try decoder.decodeValue(type, from: string)
             self.currentIndex += 1
             return value
         }
@@ -522,9 +460,7 @@ class _XMLDecoder: Decoder {
             guard let string = try self.decodeStringAtCurrentIndex() else {
                 throw DecodingError.valueNotFound(type, DecodingError.Context(codingPath: self.decoder.codingPath, debugDescription: "Expected \(type) but found empty node instead."))
             }
-            guard let value = UInt8(string) else {
-                throw DecodingError.valueNotFound(type, DecodingError.Context(codingPath: self.decoder.codingPath, debugDescription: "Could not decode \(type)."))
-            }
+            let value = try decoder.decodeValue(type, from: string)
             self.currentIndex += 1
             return value
         }
@@ -533,9 +469,7 @@ class _XMLDecoder: Decoder {
             guard let string = try self.decodeStringAtCurrentIndex() else {
                 throw DecodingError.valueNotFound(type, DecodingError.Context(codingPath: self.decoder.codingPath, debugDescription: "Expected \(type) but found empty node instead."))
             }
-            guard let value = UInt16(string) else {
-                throw DecodingError.valueNotFound(type, DecodingError.Context(codingPath: self.decoder.codingPath, debugDescription: "Could not decode \(type)."))
-            }
+            let value = try decoder.decodeValue(type, from: string)
             self.currentIndex += 1
             return value
         }
@@ -544,9 +478,7 @@ class _XMLDecoder: Decoder {
             guard let string = try self.decodeStringAtCurrentIndex() else {
                 throw DecodingError.valueNotFound(type, DecodingError.Context(codingPath: self.decoder.codingPath, debugDescription: "Expected \(type) but found empty node instead."))
             }
-            guard let value = UInt32(string) else {
-                throw DecodingError.valueNotFound(type, DecodingError.Context(codingPath: self.decoder.codingPath, debugDescription: "Could not decode \(type)."))
-            }
+            let value = try decoder.decodeValue(type, from: string)
             self.currentIndex += 1
             return value
         }
@@ -555,9 +487,7 @@ class _XMLDecoder: Decoder {
             guard let string = try self.decodeStringAtCurrentIndex() else {
                 throw DecodingError.valueNotFound(type, DecodingError.Context(codingPath: self.decoder.codingPath, debugDescription: "Expected \(type) but found empty node instead."))
             }
-            guard let value = UInt64(string) else {
-                throw DecodingError.valueNotFound(type, DecodingError.Context(codingPath: self.decoder.codingPath, debugDescription: "Could not decode \(type)."))
-            }
+            let value = try decoder.decodeValue(type, from: string)
             self.currentIndex += 1
             return value
         }
@@ -611,13 +541,7 @@ extension _XMLDecoder: SingleValueDecodingContainer {
     
     func decode(_ type: Bool.Type) throws -> Bool {
         let string = try self.decode(String.self)
-        do {
-            let value = try self.options.boolDecodingStrategy.bool(from: string)
-            return value
-        }
-        catch {
-            throw DecodingError.typeMismatch(type, DecodingError.Context(codingPath: self.codingPath, debugDescription: "Could not decode \(type)."))
-        }
+        return try decodeValue(type, from: string)
     }
     
     func decode(_ type: String.Type) throws -> String {
@@ -627,98 +551,62 @@ extension _XMLDecoder: SingleValueDecodingContainer {
     
     func decode(_ type: Double.Type) throws -> Double {
         let string = try self.decode(String.self)
-        guard let number = self.doubleFormatter.number(from: string) else {
-            throw DecodingError.valueNotFound(type, DecodingError.Context(codingPath: self.codingPath, debugDescription: "Could not decode \(type)."))
-        }
-        return number.doubleValue
+        return try decodeValue(type, from: string)
     }
     
     func decode(_ type: Float.Type) throws -> Float {
         let string = try self.decode(String.self)
-        guard let number = self.floatFormatter.number(from: string) else {
-            throw DecodingError.valueNotFound(type, DecodingError.Context(codingPath: self.codingPath, debugDescription: "Could not decode \(type)."))
-        }
-        return number.floatValue
+        return try decodeValue(type, from: string)
     }
     
     func decode(_ type: Int.Type) throws -> Int {
         let string = try self.decode(String.self)
-        guard let value = Int(string) else {
-            throw DecodingError.valueNotFound(type, DecodingError.Context(codingPath: self.codingPath, debugDescription: "Could not decode \(type)."))
-        }
-        return value
+        return try decodeValue(type, from: string)
     }
     
     func decode(_ type: Int8.Type) throws -> Int8 {
         let string = try self.decode(String.self)
-        guard let value = Int8(string) else {
-            throw DecodingError.valueNotFound(type, DecodingError.Context(codingPath: self.codingPath, debugDescription: "Could not decode \(type)."))
-        }
-        return value
+        return try decodeValue(type, from: string)
     }
     
     func decode(_ type: Int16.Type) throws -> Int16 {
         let string = try self.decode(String.self)
-        guard let value = Int16(string) else {
-            throw DecodingError.valueNotFound(type, DecodingError.Context(codingPath: self.codingPath, debugDescription: "Could not decode \(type)."))
-        }
-        return value
+        return try decodeValue(type, from: string)
     }
     
     func decode(_ type: Int32.Type) throws -> Int32 {
         let string = try self.decode(String.self)
-        guard let value = Int32(string) else {
-            throw DecodingError.valueNotFound(type, DecodingError.Context(codingPath: self.codingPath, debugDescription: "Could not decode \(type)."))
-        }
-        return value
+        return try decodeValue(type, from: string)
     }
     
     func decode(_ type: Int64.Type) throws -> Int64 {
         let string = try self.decode(String.self)
-        guard let value = Int64(string) else {
-            throw DecodingError.valueNotFound(type, DecodingError.Context(codingPath: self.codingPath, debugDescription: "Could not decode \(type)."))
-        }
-        return value
+        return try decodeValue(type, from: string)
     }
     
     func decode(_ type: UInt.Type) throws -> UInt {
         let string = try self.decode(String.self)
-        guard let value = UInt(string) else {
-            throw DecodingError.valueNotFound(type, DecodingError.Context(codingPath: self.codingPath, debugDescription: "Could not decode \(type)."))
-        }
-        return value
+        return try decodeValue(type, from: string)
     }
     
     func decode(_ type: UInt8.Type) throws -> UInt8 {
         let string = try self.decode(String.self)
-        guard let value = UInt8(string) else {
-            throw DecodingError.valueNotFound(type, DecodingError.Context(codingPath: self.codingPath, debugDescription: "Could not decode \(type)."))
-        }
-        return value
+        return try decodeValue(type, from: string)
     }
     
     func decode(_ type: UInt16.Type) throws -> UInt16 {
         let string = try self.decode(String.self)
-        guard let value = UInt16(string) else {
-            throw DecodingError.valueNotFound(type, DecodingError.Context(codingPath: self.codingPath, debugDescription: "Could not decode \(type)."))
-        }
-        return value
+        return try decodeValue(type, from: string)
     }
     
     func decode(_ type: UInt32.Type) throws -> UInt32 {
         let string = try self.decode(String.self)
-        guard let value = UInt32(string) else {
-            throw DecodingError.valueNotFound(type, DecodingError.Context(codingPath: self.codingPath, debugDescription: "Could not decode \(type)."))
-        }
-        return value
+        return try decodeValue(type, from: string)
     }
     
     func decode(_ type: UInt64.Type) throws -> UInt64 {
         let string = try self.decode(String.self)
-        guard let value = UInt64(string) else {
-            throw DecodingError.valueNotFound(type, DecodingError.Context(codingPath: self.codingPath, debugDescription: "Could not decode \(type)."))
-        }
-        return value
+        return try decodeValue(type, from: string)
     }
     
     func decode<T>(_ type: T.Type) throws -> T where T : Decodable {
@@ -731,5 +619,99 @@ extension _XMLDecoder {
         self.storage.push(value)
         defer { _ = self.storage.pop() }
         return try type.init(from: self)
+    }
+    
+    func decodeValue(_ type: Bool.Type, from string: String) throws -> Bool {
+        do {
+            let value = try self.options.boolDecodingStrategy.bool(from: string)
+            return value
+        }
+        catch {
+            throw DecodingError.typeMismatch(type, DecodingError.Context(codingPath: self.codingPath, debugDescription: "Could not decode \(type)."))
+        }
+    }
+    
+    func decodeValue(_ type: Double.Type, from string: String) throws -> Double {
+        guard let number = self.doubleFormatter.number(from: string) else {
+            throw DecodingError.valueNotFound(type, DecodingError.Context(codingPath: self.codingPath, debugDescription: "Could not decode \(type)."))
+        }
+        return number.doubleValue
+    }
+    
+    func decodeValue(_ type: Float.Type, from string: String) throws -> Float {
+        guard let number = self.floatFormatter.number(from: string) else {
+            throw DecodingError.valueNotFound(type, DecodingError.Context(codingPath: self.codingPath, debugDescription: "Could not decode \(type)."))
+        }
+        return number.floatValue
+    }
+    
+    func decodeValue(_ type: Int.Type, from string: String) throws -> Int {
+        guard let value = Int(string) else {
+            throw DecodingError.valueNotFound(type, DecodingError.Context(codingPath: self.codingPath, debugDescription: "Could not decode \(type)."))
+        }
+        return value
+    }
+    
+    func decodeValue(_ type: Int8.Type, from string: String) throws -> Int8 {
+        guard let value = Int8(string) else {
+            throw DecodingError.valueNotFound(type, DecodingError.Context(codingPath: self.codingPath, debugDescription: "Could not decode \(type)."))
+        }
+        return value
+    }
+    
+    func decodeValue(_ type: Int16.Type, from string: String) throws -> Int16 {
+        guard let value = Int16(string) else {
+            throw DecodingError.valueNotFound(type, DecodingError.Context(codingPath: self.codingPath, debugDescription: "Could not decode \(type)."))
+        }
+        return value
+    }
+    
+    func decodeValue(_ type: Int32.Type, from string: String) throws -> Int32 {
+        guard let value = Int32(string) else {
+            throw DecodingError.valueNotFound(type, DecodingError.Context(codingPath: self.codingPath, debugDescription: "Could not decode \(type)."))
+        }
+        return value
+    }
+    
+    func decodeValue(_ type: Int64.Type, from string: String) throws -> Int64 {
+        guard let value = Int64(string) else {
+            throw DecodingError.valueNotFound(type, DecodingError.Context(codingPath: self.codingPath, debugDescription: "Could not decode \(type)."))
+        }
+        return value
+    }
+    
+    func decodeValue(_ type: UInt.Type, from string: String) throws -> UInt {
+        guard let value = UInt(string) else {
+            throw DecodingError.valueNotFound(type, DecodingError.Context(codingPath: self.codingPath, debugDescription: "Could not decode \(type)."))
+        }
+        return value
+    }
+    
+    func decodeValue(_ type: UInt8.Type, from string: String) throws -> UInt8 {
+        guard let value = UInt8(string) else {
+            throw DecodingError.valueNotFound(type, DecodingError.Context(codingPath: self.codingPath, debugDescription: "Could not decode \(type)."))
+        }
+        return value
+    }
+    
+    func decodeValue(_ type: UInt16.Type, from string: String) throws -> UInt16 {
+        guard let value = UInt16(string) else {
+            throw DecodingError.valueNotFound(type, DecodingError.Context(codingPath: self.codingPath, debugDescription: "Could not decode \(type)."))
+        }
+        return value
+    }
+    
+    func decodeValue(_ type: UInt32.Type, from string: String) throws -> UInt32 {
+        guard let value = UInt32(string) else {
+            throw DecodingError.valueNotFound(type, DecodingError.Context(codingPath: self.codingPath, debugDescription: "Could not decode \(type)."))
+        }
+        return value
+    }
+    
+    func decodeValue(_ type: UInt64.Type, from string: String) throws -> UInt64 {
+        guard let value = UInt64(string) else {
+            throw DecodingError.valueNotFound(type, DecodingError.Context(codingPath: self.codingPath, debugDescription: "Could not decode \(type)."))
+        }
+        return value
     }
 }
