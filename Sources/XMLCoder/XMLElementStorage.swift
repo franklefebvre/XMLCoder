@@ -132,3 +132,48 @@ protocol XMLTypedKey {
 protocol XMLArrayKey {
     static var elementName: String { get }
 }
+
+// MARK: Decoding
+
+struct XMLNodeWrapper {
+    let node: XMLNode
+    let elementName: String?
+    var currentTextNodeIndex: Int
+    
+    init(node: XMLNode, elementName: String? = nil) {
+        self.node = node
+        self.elementName = elementName
+        self.currentTextNodeIndex = 0
+    }
+    
+    mutating func locateNextTextNode() {
+        currentTextNodeIndex += 1
+    }
+}
+
+class XMLDecodingStorage {
+    private var stack: [XMLNodeWrapper] = []
+    
+    func push(_ node: XMLNodeWrapper) {
+        stack.append(node)
+    }
+    
+    func push(node: XMLNode) {
+        push(XMLNodeWrapper(node: node))
+    }
+    
+    func pop() -> XMLNodeWrapper {
+        return stack.removeLast()
+    }
+    
+    var topContainer: XMLNodeWrapper {
+        get {
+            return stack.last!
+        }
+    }
+    
+    func locateNextTextNode() {
+        let index = stack.count - 1
+        stack[index].locateNextTextNode()
+    }
+}
