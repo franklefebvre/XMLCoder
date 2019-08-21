@@ -119,6 +119,12 @@ class _XMLDecoder: Decoder {
                     }
                 case .text:
                     textNodes.append(child)
+                case .invalid:
+                    #if os(Linux)
+                    if child.name == "text" {
+                        textNodes.append(child)
+                    }
+                    #endif
                 default:
                     break
                 }
