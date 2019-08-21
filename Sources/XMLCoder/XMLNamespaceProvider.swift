@@ -78,12 +78,20 @@ extension XMLElement {
             return nil
         }
         #if os(Linux)
-        return self.name
+        guard let namespaces = self.namespaces else {
+            return self.localName
+        }
+        let components = self.name?.split(separator: ":", maxSplits: 1) ?? []
+        let namespacePrefix = components.count == 2 ? String(components[0]) : nil
+        guard let namespace = namespaces.first(where: { $0.name == namespacePrefix }), let namespaceURI = namespace.stringValue else {
+            return self.localName
+        }
+        return "\(namespaceURI):\(localName)"
         #else
-        guard let namespace = self.uri else {
+        guard let namespaceURI = self.uri else {
             return localName
         }
-        return "\(namespace):\(localName)"
+        return "\(namespaceURI):\(localName)"
         #endif
     }
 }
