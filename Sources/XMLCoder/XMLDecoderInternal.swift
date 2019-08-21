@@ -110,14 +110,7 @@ class _XMLDecoder: Decoder {
             for child in container.children ?? [] {
                 switch child.kind {
                 case .element:
-                    if let localName = child.localName {
-                        let qualifiedName: String
-                        if let namespace = child.uri {
-                            qualifiedName = "\(namespace):\(localName)"
-                        }
-                        else {
-                            qualifiedName = localName
-                        }
+                    if let element = child as? XMLElement, let qualifiedName = element.qualifiedName {
                         elements[qualifiedName] = child
                     }
                 case .attribute:
