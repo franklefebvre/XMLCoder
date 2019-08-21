@@ -138,6 +138,17 @@ protocol XMLArrayKey {
 struct XMLNodeWrapper {
     let node: XMLNode
     let elementName: String?
+    var currentTextNodeIndex: Int
+    
+    init(node: XMLNode, elementName: String? = nil) {
+        self.node = node
+        self.elementName = elementName
+        self.currentTextNodeIndex = 0
+    }
+    
+    mutating func locateNextTextNode() {
+        currentTextNodeIndex += 1
+    }
 }
 
 class XMLDecodingStorage {
@@ -148,7 +159,7 @@ class XMLDecodingStorage {
     }
     
     func push(node: XMLNode) {
-        push(XMLNodeWrapper(node: node, elementName: nil))
+        push(XMLNodeWrapper(node: node))
     }
     
     func pop() -> XMLNodeWrapper {
@@ -159,5 +170,10 @@ class XMLDecodingStorage {
         get {
             return stack.last!
         }
+    }
+    
+    func locateNextTextNode() {
+        let index = stack.count - 1
+        stack[index].locateNextTextNode()
     }
 }

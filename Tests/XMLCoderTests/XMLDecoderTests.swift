@@ -40,6 +40,18 @@ final class XMLDecoderTests: XCTestCase {
         XCTAssertThrowsError(try Test.decode(AttributesEnclosingStruct.self, from: xml))
     }
     
+    func testInlineText() throws {
+        let xml = """
+        <root>zero<stringElement>string</stringElement>one<intElement>42</intElement>2</root>
+        """
+        let result = try Test.decode(ElementsWithInlineText.self, from: xml)
+        XCTAssertEqual(result.inline0, "zero")
+        XCTAssertEqual(result.stringElement, "string")
+        XCTAssertEqual(result.inline1, "one")
+        XCTAssertEqual(result.intElement, 42)
+        XCTAssertEqual(result.inline2, 2)
+    }
+    
     func testNamespaces() throws {
         let xml = """
         <root xmlns:ns1="http://some.url.example.com/whatever">\
@@ -350,6 +362,7 @@ final class XMLDecoderTests: XCTestCase {
         ("testDecodeBasicXML", testDecodeBasicXML),
         ("testAttributes", testAttributes),
         ("testAttributesError", testAttributesError),
+        ("testInlineText", testInlineText),
         ("testNamespaces", testNamespaces),
         ("testNamespacesErrorMissingNamespace", testNamespacesErrorMissingNamespace),
         ("testNamespacesErrorUnexpectedNamespace", testNamespacesErrorUnexpectedNamespace),

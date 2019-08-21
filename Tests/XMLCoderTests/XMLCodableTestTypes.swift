@@ -68,6 +68,33 @@ struct AttributesStruct: Codable {
     }
 }
 
+// Inline Text
+
+struct ElementsWithInlineText: Codable {
+    var inline0: String
+    var stringElement: String
+    var inline1: String
+    var intElement: Int
+    var inline2: Int
+    
+    private enum CodingKeys: String, CodingKey, XMLTypedKey {
+        case inline0
+        case stringElement
+        case inline1
+        case intElement
+        case inline2
+        
+        var nodeType: XMLNodeType {
+            switch self {
+            case .inline0, .inline1, .inline2:
+                return .inline
+            default:
+                return .element
+            }
+        }
+    }
+}
+
 // Namespaces
 
 struct NamespaceStruct: Codable {

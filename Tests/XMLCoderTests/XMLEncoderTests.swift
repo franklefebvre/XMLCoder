@@ -40,6 +40,18 @@ final class XMLEncoderTests: XCTestCase {
         XCTAssertEqual(jsonResult, jsonExpected)
     }
     
+    func testInlineText() {
+        let value = ElementsWithInlineText(inline0:"zero", stringElement: "string", inline1: "one", intElement: 42, inline2: 2)
+        
+        let result = Test.xmlString(value)
+        
+        let expected = """
+        <root>zero<stringElement>string</stringElement>one<intElement>42</intElement>2</root>
+        """
+        
+        XCTAssertEqual(result.substringWithXMLTag("root"), expected.substringWithXMLTag("root"))
+    }
+    
     func testNamespaces() {
         let value = NamespaceStruct(with_namespace: "test1", without_namespace: "test2")
         
@@ -339,6 +351,7 @@ final class XMLEncoderTests: XCTestCase {
     static var allTests = [
         ("testEncodeBasicXML", testEncodeBasicXML),
         ("testAttributes", testAttributes),
+        ("testInlineText", testInlineText),
         ("testNamespaces", testNamespaces),
         ("testNamespacesWithOptions", testNamespacesWithOptions),
         ("testArrayWithKeyedStringElements", testArrayWithKeyedStringElements),

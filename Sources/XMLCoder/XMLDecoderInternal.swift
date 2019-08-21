@@ -96,8 +96,6 @@ class _XMLDecoder: Decoder {
         /// The path of coding keys taken to get to this point in decoding.
         private(set) public var codingPath: [CodingKey]
         
-        var allKeys: [Key]
-        
         // MARK: - Initialization
         
         /// Initializes `self` with the given references.
@@ -153,6 +151,8 @@ class _XMLDecoder: Decoder {
         
         // MARK: KeyedDecodingContainerProtocol Implementation
         
+        var allKeys: [Key]
+        
         func contains(_ key: Key) -> Bool {
             switch _nodeType(key) {
             case .element, .array(_):
@@ -161,7 +161,7 @@ class _XMLDecoder: Decoder {
             case .attribute:
                 return attributes[key.stringValue] != nil
             case .inline:
-                return textNodes.count != 0 // TODO: use index
+                return decoder.storage.topContainer.currentTextNodeIndex < textNodes.count
             }
         }
         
@@ -183,17 +183,19 @@ class _XMLDecoder: Decoder {
                 guard let node = elements[qualifiedKey] else {
                     return nil
                 }
-                return XMLNodeWrapper(node: node, elementName: nil)
+                return XMLNodeWrapper(node: node)
             case .attribute:
                 guard let node = attributes[key.stringValue] else {
                     return nil
                 }
-                return XMLNodeWrapper(node: node, elementName: nil)
+                return XMLNodeWrapper(node: node)
             case .inline:
-                guard let node = textNodes.first else { // TODO: use index
+                guard decoder.storage.topContainer.currentTextNodeIndex < textNodes.count else {
                     return nil
                 }
-                return XMLNodeWrapper(node: node, elementName: nil)
+                let node = textNodes[decoder.storage.topContainer.currentTextNodeIndex]
+                decoder.storage.locateNextTextNode()
+                return XMLNodeWrapper(node: node)
             case .array(let elementName):
                 let qualifiedKey = qualifiedName(forKey: key)
                 guard let node = elements[qualifiedKey] else {
@@ -557,7 +559,7 @@ class _XMLDecoder: Decoder {
                 throw DecodingError.valueNotFound(type, DecodingError.Context(codingPath: self.decoder.codingPath, debugDescription: "Unkeyed container is at end."))
             }
             let node = self.elements[self.currentIndex]
-            let nodeWrapper = XMLNodeWrapper(node: node, elementName: nil)
+            let nodeWrapper = XMLNodeWrapper(node: node)
             guard let value = try decoder.unboxElement(nodeWrapper, as: type) else {
                 fatalError()
             }
