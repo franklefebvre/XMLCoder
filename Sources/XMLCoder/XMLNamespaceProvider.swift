@@ -72,4 +72,26 @@ extension XMLElement {
         self.addNamespace(namespaceNode)
         #endif
     }
+    
+    var qualifiedName: String? {
+        guard let localName = self.localName else {
+            return nil
+        }
+        #if os(Linux)
+        guard let namespaces = self.namespaces else {
+            return self.localName
+        }
+        let components = self.name?.split(separator: ":", maxSplits: 1) ?? []
+        let namespacePrefix = components.count == 2 ? String(components[0]) : nil
+        guard let namespace = namespaces.first(where: { $0.name == namespacePrefix }), let namespaceURI = namespace.stringValue else {
+            return self.localName
+        }
+        return "\(namespaceURI):\(localName)"
+        #else
+        guard let namespaceURI = self.uri else {
+            return localName
+        }
+        return "\(namespaceURI):\(localName)"
+        #endif
+    }
 }

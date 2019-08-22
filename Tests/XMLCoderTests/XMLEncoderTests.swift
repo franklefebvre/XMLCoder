@@ -1,22 +1,10 @@
 import XCTest
 @testable import XMLCoder
 
-final class XMLCoderTests: XCTestCase {
+final class XMLEncoderTests: XCTestCase {
     func testEncodeBasicXML() {
-		struct TestStruct: Encodable {
-			var integer_element: Int
-			var string_element: String
-			var embedded_element: EmbeddedStruct
-			var string_array: [XMLStringElement]
-			var int_array: [XMLIntElement]
-		}
-
-		struct EmbeddedStruct: Encodable {
-			var some_element: String
-		}
-
-		let embedded = EmbeddedStruct(some_element: "inside")
-		let value = TestStruct(integer_element: 42, string_element: "   moof   & < >   ", embedded_element: embedded, string_array: ["one", "two", "three"], int_array: [1, 2, 3])
+		let embedded = BasicEmbeddedStruct(some_element: "inside")
+		let value = BasicTestStruct(integer_element: 42, string_element: "   moof   & < >   ", embedded_element: embedded, string_array: ["one", "two", "three"], int_array: [1, 2, 3])
 
 		let result = Test.xmlString(value)
 		
@@ -34,53 +22,34 @@ final class XMLCoderTests: XCTestCase {
     }
     
     func testAttributes() {
-        struct EnclosingStruct: Encodable {
-            var container: AttributesStruct
-            var top_attribute: CodableXMLAttribute
-        }
-        struct AttributesStruct: Encodable {
-            var element: String
-            var attribute: CodableXMLAttribute
-            var inlineText: CodableXMLInlineText
-        }
-        
-        let value = EnclosingStruct(container: AttributesStruct(element: "elem", attribute: "attr", inlineText: "text"), top_attribute: "top")
+        let contents = AttributesStruct(element: "elem", attribute: "attr", inlineText: "text", number: 42)
+        let value = AttributesEnclosingStruct(container: contents, top_attribute: "top")
         
         let result = Test.xmlString(value)
         
         let expected = """
-        <root top_attribute="top"><container attribute="attr"><element>elem</element>text</container></root>
+        <root top_attribute="top"><container attribute="attr"><element>elem</element>text<number>42</number></container></root>
         """
         
         XCTAssertEqual(result.substringWithXMLTag("root"), expected.substringWithXMLTag("root"))
         
-        #if false
         let jsonResult = Test.jsonString(value)
         let jsonExpected = """
-        {"container":{"attribute":"attr","element":"elem","inlineText":"text"},"top_attribute":"top"}
+        {"container":{"attribute":"attr","element":"elem","inlineText":"text","number":42},"top_attribute":"top"}
         """
         XCTAssertEqual(jsonResult, jsonExpected)
-        #endif
     }
     
-    struct NamespaceStruct: Encodable {
-        var with_namespace: String
-        var without_namespace: String
+    func testInlineText() {
+        let value = ElementsWithInlineText(inline0:"zero", stringElement: "string", inline1: "one", intElement: 42, inline2: 2)
         
-        private enum CodingKeys: String, CodingKey, XMLQualifiedKey {
-            case with_namespace
-            case without_namespace
-            
-            var namespace: String? {
-                switch(self) {
-                case .with_namespace:
-                    return "http://some.url.example.com/whatever"
-                default:
-                    return nil
-                }
-            }
-        }
-        // extension declaration wouldn't work here (not file scope).
+        let result = Test.xmlString(value)
+        
+        let expected = """
+        <root>zero<stringElement>string</stringElement>one<intElement>42</intElement>2</root>
+        """
+        
+        XCTAssertEqual(result.substringWithXMLTag("root"), expected.substringWithXMLTag("root"))
     }
     
     func testNamespaces() {
@@ -129,16 +98,6 @@ final class XMLCoderTests: XCTestCase {
     }
     
     func testArrayWithKeyedStringElements() {
-        struct ArrayStruct: Encodable {
-            var string: String
-            var children: [ArrayElement]
-        }
-        
-        struct ChildKey: XMLArrayKey {
-            static var elementName = "child"
-        }
-        typealias ArrayElement = XMLArrayElement<ChildKey>
-        
         let value = ArrayStruct(string: "some text", children: ["one", "two", "three", "four"])
         
         let result = Test.xmlString(value)
@@ -154,21 +113,12 @@ final class XMLCoderTests: XCTestCase {
         
         let jsonResult = Test.jsonString(value)
         let jsonExpected = """
-        {"children":[{"child":"one"},{"child":"two"},{"child":"three"},{"child":"four"}],"string":"some text"}
+        {"children":["one","two","three","four"],"string":"some text"}
         """
         XCTAssertEqual(jsonResult, jsonExpected)
     }
     
     func testArrayWithAttributes() {
-        struct ArrayElementStruct: Encodable, XMLCustomElementMode {
-            var id: CodableXMLAttribute
-            var inlineText: CodableXMLInlineText
-            
-            var elementMode: XMLElementMode {
-                return .keyed("element")
-            }
-        }
-        
         let value = [
             ArrayElementStruct(id: "1", inlineText: "one"),
             ArrayElementStruct(id: "2", inlineText: "two"),
@@ -189,7 +139,6 @@ final class XMLCoderTests: XCTestCase {
         
         XCTAssertEqual(result.substringWithXMLTag("root"), expected.substringWithXMLTag("root"))
         
-        #if false
         let jsonResult = Test.jsonString(value)
         let jsonExpected = """
         [{"id":"1","inlineText":"one"},\
@@ -198,51 +147,29 @@ final class XMLCoderTests: XCTestCase {
         {"id":"4","inlineText":"four"}]
         """
         XCTAssertEqual(jsonResult, jsonExpected)
-        #endif
     }
     
     func testArrayWithAlternatingKeysAndValues() {
-        struct KeyElement: Encodable {
-            let value: CodableXMLInlineText
-        }
-        struct ValueElement: Encodable {
-            let type: CodableXMLAttribute
-            let value: CodableXMLInlineText
-        }
-        struct ArrayElement: Encodable {
-            let key: KeyElement
-            let value: ValueElement
-        }
-        
-        let value: [ArrayElement] = [
-            ArrayElement(key: KeyElement(value: "one"), value: ValueElement(type: "string", value: "value 1")),
-            ArrayElement(key: KeyElement(value: "two"), value: ValueElement(type: "integer", value: "2")),
-        ]
+        let value = AlternatingRoot(array: [
+            AlternatingArrayElement(key: AlternatingKeyElement(value: "one"), value: AlternatingValueElement(type: "string", value: "value 1")),
+            AlternatingArrayElement(key: AlternatingKeyElement(value: "two"), value: AlternatingValueElement(type: "integer", value: "2")),
+        ])
         
         let result = Test.xmlString(value)
         
         let expected = """
-        <root>\
+        <root><array>\
         <key>one</key>\
         <value type="string">value 1</value>\
         <key>two</key>\
         <value type="integer">2</value>\
-        </root>
+        </array></root>
         """
         
         XCTAssertEqual(result.substringWithXMLTag("root"), expected.substringWithXMLTag("root"))
     }
     
     func testArrayOfStructs() {
-        struct ArrayElement: Encodable, XMLCustomElementMode {
-            let field1: String
-            let field2: String
-            
-            var elementMode: XMLElementMode {
-                return .keyed("element")
-            }
-        }
-        
         let value = [
             ArrayElement(field1: "first.1", field2: "first.2"),
             ArrayElement(field1: "second.1", field2: "second.2"),
@@ -271,7 +198,7 @@ final class XMLCoderTests: XCTestCase {
     }
     
     func testArrayOfArrays() {
-        let value: [[XMLStringElement]] = [
+        let value: [[String]] = [
             ["11", "12", "13"],
             ["21", "22", "23"],
             ["31", "32", "33"],
@@ -302,13 +229,6 @@ final class XMLCoderTests: XCTestCase {
     }
     
     func testNilAsMissing() {
-        struct OptionalStruct: Encodable {
-            var optionalAttribute: CodableXMLAttribute?
-            var mandatoryAttribute: CodableXMLAttribute
-            var optionalElement: String?
-            var mandatoryElement: String
-        }
-        
         let value = OptionalStruct(optionalAttribute: nil, mandatoryAttribute: "attr", optionalElement: nil, mandatoryElement: "elem")
         
         let result = Test.xmlString(value)
@@ -322,28 +242,6 @@ final class XMLCoderTests: XCTestCase {
     }
     
     func testNilAsEmpty() {
-        struct OptionalStruct: Encodable {
-            var optionalAttribute: CodableXMLAttribute?
-            var mandatoryAttribute: CodableXMLAttribute
-            var optionalElement: String?
-            var mandatoryElement: String
-            
-            enum CodingKeys: CodingKey {
-                case optionalAttribute
-                case mandatoryAttribute
-                case optionalElement
-                case mandatoryElement
-            }
-            
-            func encode(to encoder: Encoder) throws {
-                var container = encoder.container(keyedBy: CodingKeys.self)
-                try container.encode(optionalAttribute, forKey: .optionalAttribute)
-                try container.encode(mandatoryAttribute, forKey: .mandatoryAttribute)
-                try container.encode(optionalElement, forKey: .optionalElement)
-                try container.encode(mandatoryElement, forKey: .mandatoryElement)
-            }
-        }
-        
         let value = OptionalStruct(optionalAttribute: nil, mandatoryAttribute: "attr", optionalElement: nil, mandatoryElement: "elem")
         
         let encoder = XMLEncoder()
@@ -361,11 +259,6 @@ final class XMLCoderTests: XCTestCase {
     }
     
     func testFloatAndDouble() {
-        struct FloatDoubleStruct: Encodable {
-            var f: Float
-            var d: Double
-        }
-        
         let value = FloatDoubleStruct(f: 1e-10, d: 1e-15)
         
         let result = Test.xmlString(value)
@@ -379,13 +272,6 @@ final class XMLCoderTests: XCTestCase {
     }
     
     func testDateAndURL() {
-        struct DateURLStruct: Encodable {
-            var date: Date
-            var dates: [Date]
-            var url: URL
-            var urls: [URL]
-        }
-        
         let date = Date(timeIntervalSince1970: 1)
         let url = URL(string: "https://swift.org/")!
         let value = DateURLStruct(date: date, dates: [date, date], url: url, urls: [url, url])
@@ -404,11 +290,6 @@ final class XMLCoderTests: XCTestCase {
     }
     
     func testBoolWithDefaultStrategy() {
-        struct BoolStruct: Encodable {
-            var test: Bool
-            var tests: [Bool]
-        }
-        
         let value = BoolStruct(test: true, tests: [false, true, false])
         
         let result = Test.xmlString(value)
@@ -422,11 +303,6 @@ final class XMLCoderTests: XCTestCase {
     }
     
     func testBoolWithCustomStrategy() {
-        struct BoolStruct: Encodable {
-            var test: Bool
-            var tests: [Bool]
-        }
-        
         let value = BoolStruct(test: true, tests: [false, true, false])
         
         let encoder = XMLEncoder()
@@ -444,11 +320,6 @@ final class XMLCoderTests: XCTestCase {
     }
     
     func testData() {
-        struct DataStruct: Encodable {
-            var element: Data
-            var elements: [Data]
-        }
-        
         let data = Data(bytes: [0x42, 0x00, 0xff])
         let value = DataStruct(element: data, elements: [data, data])
         
@@ -463,21 +334,6 @@ final class XMLCoderTests: XCTestCase {
     }
     
     func testSubclass() {
-        class Base: Encodable {
-            var base: String = ""
-        }
-        class Subclass: Base {
-            var sub: String = ""
-            private enum CodingKeys: String, CodingKey {
-                case sub
-            }
-            override func encode(to encoder: Encoder) throws {
-                try super.encode(to: encoder)
-                var container = encoder.container(keyedBy: CodingKeys.self)
-                try container.encode(sub, forKey: .sub)
-            }
-        }
-        
         let value = Subclass()
         value.base = "base"
         value.sub = "sub"
@@ -495,6 +351,7 @@ final class XMLCoderTests: XCTestCase {
     static var allTests = [
         ("testEncodeBasicXML", testEncodeBasicXML),
         ("testAttributes", testAttributes),
+        ("testInlineText", testInlineText),
         ("testNamespaces", testNamespaces),
         ("testNamespacesWithOptions", testNamespacesWithOptions),
         ("testArrayWithKeyedStringElements", testArrayWithKeyedStringElements),
