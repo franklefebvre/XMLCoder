@@ -220,6 +220,8 @@ class _XMLDecoder: Decoder {
         }
         
         func decode(_ type: Bool.Type, forKey key: Key) throws -> Bool {
+            self.decoder.codingPath.append(key)
+            defer { self.decoder.codingPath.removeLast() }
             let string = try decode(String.self, forKey: key)
             return try decoder.decodeValue(type, from: string)
         }
@@ -232,81 +234,113 @@ class _XMLDecoder: Decoder {
         }
         
         func decode(_ type: Double.Type, forKey key: Key) throws -> Double {
+            self.decoder.codingPath.append(key)
+            defer { self.decoder.codingPath.removeLast() }
             let string = try decode(String.self, forKey: key)
             return try decoder.decodeValue(type, from: string)
         }
         
         func decode(_ type: Float.Type, forKey key: Key) throws -> Float {
+            self.decoder.codingPath.append(key)
+            defer { self.decoder.codingPath.removeLast() }
             let string = try decode(String.self, forKey: key)
             return try decoder.decodeValue(type, from: string)
         }
         
         func decode(_ type: Int.Type, forKey key: Key) throws -> Int {
+            self.decoder.codingPath.append(key)
+            defer { self.decoder.codingPath.removeLast() }
             let string = try decode(String.self, forKey: key)
             return try decoder.decodeValue(type, from: string)
         }
         
         func decode(_ type: Int8.Type, forKey key: Key) throws -> Int8 {
+            self.decoder.codingPath.append(key)
+            defer { self.decoder.codingPath.removeLast() }
             let string = try decode(String.self, forKey: key)
             return try decoder.decodeValue(type, from: string)
         }
         
         func decode(_ type: Int16.Type, forKey key: Key) throws -> Int16 {
+            self.decoder.codingPath.append(key)
+            defer { self.decoder.codingPath.removeLast() }
             let string = try decode(String.self, forKey: key)
             return try decoder.decodeValue(type, from: string)
         }
         
         func decode(_ type: Int32.Type, forKey key: Key) throws -> Int32 {
+            self.decoder.codingPath.append(key)
+            defer { self.decoder.codingPath.removeLast() }
             let string = try decode(String.self, forKey: key)
             return try decoder.decodeValue(type, from: string)
         }
         
         func decode(_ type: Int64.Type, forKey key: Key) throws -> Int64 {
+            self.decoder.codingPath.append(key)
+            defer { self.decoder.codingPath.removeLast() }
             let string = try decode(String.self, forKey: key)
             return try decoder.decodeValue(type, from: string)
         }
         
         func decode(_ type: UInt.Type, forKey key: Key) throws -> UInt {
+            self.decoder.codingPath.append(key)
+            defer { self.decoder.codingPath.removeLast() }
             let string = try decode(String.self, forKey: key)
             return try decoder.decodeValue(type, from: string)
         }
         
         func decode(_ type: UInt8.Type, forKey key: Key) throws -> UInt8 {
+            self.decoder.codingPath.append(key)
+            defer { self.decoder.codingPath.removeLast() }
             let string = try decode(String.self, forKey: key)
             return try decoder.decodeValue(type, from: string)
         }
         
         func decode(_ type: UInt16.Type, forKey key: Key) throws -> UInt16 {
+            self.decoder.codingPath.append(key)
+            defer { self.decoder.codingPath.removeLast() }
             let string = try decode(String.self, forKey: key)
             return try decoder.decodeValue(type, from: string)
         }
         
         func decode(_ type: UInt32.Type, forKey key: Key) throws -> UInt32 {
+            self.decoder.codingPath.append(key)
+            defer { self.decoder.codingPath.removeLast() }
             let string = try decode(String.self, forKey: key)
             return try decoder.decodeValue(type, from: string)
         }
         
         func decode(_ type: UInt64.Type, forKey key: Key) throws -> UInt64 {
+            self.decoder.codingPath.append(key)
+            defer { self.decoder.codingPath.removeLast() }
             let string = try decode(String.self, forKey: key)
             return try decoder.decodeValue(type, from: string)
         }
         
         func decodeDate(forKey key: Key) throws -> Date {
+            self.decoder.codingPath.append(key)
+            defer { self.decoder.codingPath.removeLast() }
             let string = try decode(String.self, forKey: key)
             return try decoder.decodeValue(Date.self, from: string)
         }
         
         func decodeData(forKey key: Key) throws -> Data {
+            self.decoder.codingPath.append(key)
+            defer { self.decoder.codingPath.removeLast() }
             let string = try decode(String.self, forKey: key)
             return try decoder.decodeValue(Data.self, from: string)
         }
         
         func decodeURL(forKey key: Key) throws -> URL {
+            self.decoder.codingPath.append(key)
+            defer { self.decoder.codingPath.removeLast() }
             let string = try decode(String.self, forKey: key)
             return try decoder.decodeValue(URL.self, from: string)
         }
         
         func decode<T>(_ type: T.Type, forKey key: Key) throws -> T where T : Decodable {
+            self.decoder.codingPath.append(key)
+            defer { self.decoder.codingPath.removeLast() }
             if T.self == Date.self {
                 return try decodeDate(forKey: key) as! T
             }
@@ -343,6 +377,27 @@ class _XMLDecoder: Decoder {
     }
     
     struct XMLUnkeyedDecodingContainer: UnkeyedDecodingContainer {
+        
+        struct IndexKey: CodingKey {
+            var stringValue: String
+            var intValue: Int?
+            
+            init?(stringValue: String) {
+                self.stringValue = stringValue
+                self.intValue = nil
+            }
+            
+            init?(intValue: Int) {
+                self.stringValue = "\(intValue)"
+                self.intValue = intValue
+            }
+            
+            init(index: Int) {
+                self.stringValue = "[\(index)]"
+                self.intValue = index
+            }
+        }
+        
         // MARK: Properties
         
         /// A reference to the decoder we're reading from.
@@ -400,6 +455,10 @@ class _XMLDecoder: Decoder {
         }
         
         mutating func decode(_ type: Bool.Type) throws -> Bool {
+            self.decoder.codingPath.append(IndexKey(index: self.currentIndex))
+            defer {
+                self.decoder.codingPath.removeLast()
+            }
             guard let string = try self.decodeStringAtCurrentIndex() else {
                 throw DecodingError.valueNotFound(type, DecodingError.Context(codingPath: self.decoder.codingPath, debugDescription: "Expected \(type) but found empty node instead."))
             }
@@ -407,12 +466,20 @@ class _XMLDecoder: Decoder {
         }
         
         mutating func decode(_ type: String.Type) throws -> String {
+            self.decoder.codingPath.append(IndexKey(index: self.currentIndex))
+            defer {
+                self.decoder.codingPath.removeLast()
+            }
             let decoded = try self.decodeStringAtCurrentIndex() ?? ""
             self.currentIndex += 1
             return decoded
         }
         
         mutating func decode(_ type: Double.Type) throws -> Double {
+            self.decoder.codingPath.append(IndexKey(index: self.currentIndex))
+            defer {
+                self.decoder.codingPath.removeLast()
+            }
             guard let string = try self.decodeStringAtCurrentIndex() else {
                 throw DecodingError.valueNotFound(type, DecodingError.Context(codingPath: self.decoder.codingPath, debugDescription: "Expected \(type) but found empty node instead."))
             }
@@ -422,6 +489,10 @@ class _XMLDecoder: Decoder {
         }
         
         mutating func decode(_ type: Float.Type) throws -> Float {
+            self.decoder.codingPath.append(IndexKey(index: self.currentIndex))
+            defer {
+                self.decoder.codingPath.removeLast()
+            }
             guard let string = try self.decodeStringAtCurrentIndex() else {
                 throw DecodingError.valueNotFound(type, DecodingError.Context(codingPath: self.decoder.codingPath, debugDescription: "Expected \(type) but found empty node instead."))
             }
@@ -431,6 +502,10 @@ class _XMLDecoder: Decoder {
         }
         
         mutating func decode(_ type: Int.Type) throws -> Int {
+            self.decoder.codingPath.append(IndexKey(index: self.currentIndex))
+            defer {
+                self.decoder.codingPath.removeLast()
+            }
             guard let string = try self.decodeStringAtCurrentIndex() else {
                 throw DecodingError.valueNotFound(type, DecodingError.Context(codingPath: self.decoder.codingPath, debugDescription: "Expected \(type) but found empty node instead."))
             }
@@ -440,6 +515,10 @@ class _XMLDecoder: Decoder {
         }
         
         mutating func decode(_ type: Int8.Type) throws -> Int8 {
+            self.decoder.codingPath.append(IndexKey(index: self.currentIndex))
+            defer {
+                self.decoder.codingPath.removeLast()
+            }
             guard let string = try self.decodeStringAtCurrentIndex() else {
                 throw DecodingError.valueNotFound(type, DecodingError.Context(codingPath: self.decoder.codingPath, debugDescription: "Expected \(type) but found empty node instead."))
             }
@@ -449,6 +528,10 @@ class _XMLDecoder: Decoder {
         }
         
         mutating func decode(_ type: Int16.Type) throws -> Int16 {
+            self.decoder.codingPath.append(IndexKey(index: self.currentIndex))
+            defer {
+                self.decoder.codingPath.removeLast()
+            }
             guard let string = try self.decodeStringAtCurrentIndex() else {
                 throw DecodingError.valueNotFound(type, DecodingError.Context(codingPath: self.decoder.codingPath, debugDescription: "Expected \(type) but found empty node instead."))
             }
@@ -458,6 +541,10 @@ class _XMLDecoder: Decoder {
         }
         
         mutating func decode(_ type: Int32.Type) throws -> Int32 {
+            self.decoder.codingPath.append(IndexKey(index: self.currentIndex))
+            defer {
+                self.decoder.codingPath.removeLast()
+            }
             guard let string = try self.decodeStringAtCurrentIndex() else {
                 throw DecodingError.valueNotFound(type, DecodingError.Context(codingPath: self.decoder.codingPath, debugDescription: "Expected \(type) but found empty node instead."))
             }
@@ -467,6 +554,10 @@ class _XMLDecoder: Decoder {
         }
         
         mutating func decode(_ type: Int64.Type) throws -> Int64 {
+            self.decoder.codingPath.append(IndexKey(index: self.currentIndex))
+            defer {
+                self.decoder.codingPath.removeLast()
+            }
             guard let string = try self.decodeStringAtCurrentIndex() else {
                 throw DecodingError.valueNotFound(type, DecodingError.Context(codingPath: self.decoder.codingPath, debugDescription: "Expected \(type) but found empty node instead."))
             }
@@ -476,6 +567,10 @@ class _XMLDecoder: Decoder {
         }
         
         mutating func decode(_ type: UInt.Type) throws -> UInt {
+            self.decoder.codingPath.append(IndexKey(index: self.currentIndex))
+            defer {
+                self.decoder.codingPath.removeLast()
+            }
             guard let string = try self.decodeStringAtCurrentIndex() else {
                 throw DecodingError.valueNotFound(type, DecodingError.Context(codingPath: self.decoder.codingPath, debugDescription: "Expected \(type) but found empty node instead."))
             }
@@ -485,6 +580,10 @@ class _XMLDecoder: Decoder {
         }
         
         mutating func decode(_ type: UInt8.Type) throws -> UInt8 {
+            self.decoder.codingPath.append(IndexKey(index: self.currentIndex))
+            defer {
+                self.decoder.codingPath.removeLast()
+            }
             guard let string = try self.decodeStringAtCurrentIndex() else {
                 throw DecodingError.valueNotFound(type, DecodingError.Context(codingPath: self.decoder.codingPath, debugDescription: "Expected \(type) but found empty node instead."))
             }
@@ -494,6 +593,10 @@ class _XMLDecoder: Decoder {
         }
         
         mutating func decode(_ type: UInt16.Type) throws -> UInt16 {
+            self.decoder.codingPath.append(IndexKey(index: self.currentIndex))
+            defer {
+                self.decoder.codingPath.removeLast()
+            }
             guard let string = try self.decodeStringAtCurrentIndex() else {
                 throw DecodingError.valueNotFound(type, DecodingError.Context(codingPath: self.decoder.codingPath, debugDescription: "Expected \(type) but found empty node instead."))
             }
@@ -503,6 +606,10 @@ class _XMLDecoder: Decoder {
         }
         
         mutating func decode(_ type: UInt32.Type) throws -> UInt32 {
+            self.decoder.codingPath.append(IndexKey(index: self.currentIndex))
+            defer {
+                self.decoder.codingPath.removeLast()
+            }
             guard let string = try self.decodeStringAtCurrentIndex() else {
                 throw DecodingError.valueNotFound(type, DecodingError.Context(codingPath: self.decoder.codingPath, debugDescription: "Expected \(type) but found empty node instead."))
             }
@@ -512,6 +619,10 @@ class _XMLDecoder: Decoder {
         }
         
         mutating func decode(_ type: UInt64.Type) throws -> UInt64 {
+            self.decoder.codingPath.append(IndexKey(index: self.currentIndex))
+            defer {
+                self.decoder.codingPath.removeLast()
+            }
             guard let string = try self.decodeStringAtCurrentIndex() else {
                 throw DecodingError.valueNotFound(type, DecodingError.Context(codingPath: self.decoder.codingPath, debugDescription: "Expected \(type) but found empty node instead."))
             }
@@ -521,6 +632,10 @@ class _XMLDecoder: Decoder {
         }
         
         mutating func decodeDate() throws -> Date {
+            self.decoder.codingPath.append(IndexKey(index: self.currentIndex))
+            defer {
+                self.decoder.codingPath.removeLast()
+            }
             guard let string = try self.decodeStringAtCurrentIndex() else {
                 throw DecodingError.valueNotFound(Date.self, DecodingError.Context(codingPath: self.decoder.codingPath, debugDescription: "Expected \(Date.self) but found empty node instead."))
             }
@@ -530,6 +645,10 @@ class _XMLDecoder: Decoder {
         }
         
         mutating func decodeData() throws -> Data {
+            self.decoder.codingPath.append(IndexKey(index: self.currentIndex))
+            defer {
+                self.decoder.codingPath.removeLast()
+            }
             guard let string = try self.decodeStringAtCurrentIndex() else {
                 throw DecodingError.valueNotFound(Data.self, DecodingError.Context(codingPath: self.decoder.codingPath, debugDescription: "Expected \(Data.self) but found empty node instead."))
             }
@@ -539,6 +658,10 @@ class _XMLDecoder: Decoder {
         }
         
         mutating func decodeURL() throws -> URL {
+            self.decoder.codingPath.append(IndexKey(index: self.currentIndex))
+            defer {
+                self.decoder.codingPath.removeLast()
+            }
             guard let string = try self.decodeStringAtCurrentIndex() else {
                 throw DecodingError.valueNotFound(URL.self, DecodingError.Context(codingPath: self.decoder.codingPath, debugDescription: "Expected \(URL.self) but found empty node instead."))
             }
@@ -548,6 +671,10 @@ class _XMLDecoder: Decoder {
         }
         
         mutating func decode<T>(_ type: T.Type) throws -> T where T : Decodable {
+            self.decoder.codingPath.append(IndexKey(index: self.currentIndex))
+            defer {
+                self.decoder.codingPath.removeLast()
+            }
             if T.self == Date.self {
                 return try decodeDate() as! T
             }

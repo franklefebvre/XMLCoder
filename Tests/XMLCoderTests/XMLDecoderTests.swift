@@ -37,7 +37,20 @@ final class XMLDecoderTests: XCTestCase {
         let xml = """
         <root top_attribute="top"><container><attribute>attr</attribute><element>elem</element>text<number>42</number></container></root>
         """
-        XCTAssertThrowsError(try Test.decode(AttributesEnclosingStruct.self, from: xml))
+        XCTAssertThrowsError(try Test.decode(AttributesEnclosingStruct.self, from: xml)) {
+            error in
+            guard let error = error as? DecodingError else {
+                XCTFail("Unexpected error type.")
+                return
+            }
+            switch error {
+            case .valueNotFound(_, let context):
+                XCTAssertEqual(context.codingPath.map { $0.stringValue }, ["container"])
+                XCTAssertEqual(context.debugDescription, "No value associated with key attribute.")
+            default:
+                XCTFail("Unexpected error value: \(error).")
+            }
+        }
     }
     
     func testInlineText() throws {
@@ -71,7 +84,20 @@ final class XMLDecoderTests: XCTestCase {
         <without_namespace>test2</without_namespace>\
         </root>
         """
-        XCTAssertThrowsError(try Test.decode(NamespaceStruct.self, from: xml))
+        XCTAssertThrowsError(try Test.decode(NamespaceStruct.self, from: xml)) {
+            error in
+            guard let error = error as? DecodingError else {
+                XCTFail("Unexpected error type.")
+                return
+            }
+            switch error {
+            case .valueNotFound(_, let context):
+                XCTAssertEqual(context.codingPath.map { $0.stringValue }, [])
+                XCTAssertEqual(context.debugDescription, "No value associated with key with_namespace.")
+            default:
+                XCTFail("Unexpected error value: \(error).")
+            }
+        }
     }
     
     func testNamespacesErrorUnexpectedNamespace() {
@@ -81,7 +107,20 @@ final class XMLDecoderTests: XCTestCase {
         <ns1:without_namespace>test2</ns1:without_namespace>\
         </root>
         """
-        XCTAssertThrowsError(try Test.decode(NamespaceStruct.self, from: xml))
+        XCTAssertThrowsError(try Test.decode(NamespaceStruct.self, from: xml)) {
+            error in
+            guard let error = error as? DecodingError else {
+                XCTFail("Unexpected error type.")
+                return
+            }
+            switch error {
+            case .valueNotFound(_, let context):
+                XCTAssertEqual(context.codingPath.map { $0.stringValue }, [])
+                XCTAssertEqual(context.debugDescription, "No value associated with key without_namespace.")
+            default:
+                XCTFail("Unexpected error value: \(error).")
+            }
+        }
     }
     
     func testNamespacesWithOptions() throws {
@@ -326,7 +365,20 @@ final class XMLDecoderTests: XCTestCase {
         </root>
         """
         
-        XCTAssertThrowsError(try Test.decode(BoolStruct.self, from: xml))
+        XCTAssertThrowsError(try Test.decode(BoolStruct.self, from: xml)) {
+            error in
+            guard let error = error as? DecodingError else {
+                XCTFail("Unexpected error type.")
+                return
+            }
+            switch error {
+            case .typeMismatch(_, let context):
+                XCTAssertEqual(context.codingPath.map { $0.stringValue }, ["tests", "[2]"])
+                XCTAssertEqual(context.debugDescription, "Could not decode Bool.")
+            default:
+                XCTFail("Unexpected error value: \(error).")
+            }
+        }
     }
     
     func testData() throws {
