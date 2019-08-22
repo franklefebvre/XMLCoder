@@ -103,19 +103,18 @@ class _XMLDecoder: Decoder {
             self.decoder = decoder
             self.codingPath = codingPath
             self.container = container
-            self.allKeys = []
             var elements = [String: XMLNode]()
             var attributes = [String: XMLNode]()
             var textNodes = [XMLNode]()
+            var allKeys = [Key]()
             for child in container.children ?? [] {
                 switch child.kind {
                 case .element:
                     if let element = child as? XMLElement, let qualifiedName = element.qualifiedName {
                         elements[qualifiedName] = child
-                    }
-                case .attribute:
-                    if let name = child.name {
-                        attributes[name] = child
+                        if let key = Key(stringValue: child.localName!) { // if qualifiedName is not nil, localName can be safely unwrapped.
+                            allKeys.append(key)
+                        }
                     }
                 case .text:
                     textNodes.append(child)
@@ -132,11 +131,15 @@ class _XMLDecoder: Decoder {
             for attribute in container.attributes ?? [] {
                 if let name = attribute.name {
                     attributes[name] = attribute
+                    if let key = Key(stringValue: attribute.localName!) {
+                        allKeys.append(key)
+                    }
                 }
             }
             self.elements = elements
             self.attributes = attributes
             self.textNodes = textNodes
+            self.allKeys = allKeys
         }
         
         // MARK: - Coding Path Operations

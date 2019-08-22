@@ -204,7 +204,7 @@ open class XMLDecoder {
             throw DecodingError.valueNotFound(type, DecodingError.Context(codingPath: [], debugDescription: "Root node not found."))
         }
         let decoder = _XMLDecoder(referencing: document, options: self.options) // or topLevel?
-        let nodeWrapper = XMLNodeWrapper(node: topLevel, elementName: nil)
+        let nodeWrapper = XMLNodeWrapper(node: topLevel)
         guard let value = try decoder.unboxElement(nodeWrapper, as: type) else {
             throw DecodingError.valueNotFound(type, DecodingError.Context(codingPath: [], debugDescription: "The given data did not contain a top-level value."))
         }
