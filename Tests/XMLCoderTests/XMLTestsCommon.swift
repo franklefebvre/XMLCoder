@@ -6,6 +6,9 @@
 //
 
 import Foundation
+#if os(Linux)
+import FoundationXML
+#endif
 @testable import XMLCoder
 
 extension String {
@@ -28,7 +31,9 @@ struct Test {
 
     static func jsonString<T: Encodable>(_ value: T) -> String {
         let encoder = JSONEncoder()
-        encoder.outputFormatting = .sortedKeys
+        if #available(macOS 10.13, *) {
+	        encoder.outputFormatting = .sortedKeys
+        }
         let json = try! encoder.encode(value)
         let result = String(data: json, encoding: .utf8)!
         return result

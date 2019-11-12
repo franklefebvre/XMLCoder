@@ -1,4 +1,7 @@
 import XCTest
+#if os(Linux)
+import FoundationXML
+#endif
 @testable import XMLCoder
 
 final class XMLDecoderTests: XCTestCase {

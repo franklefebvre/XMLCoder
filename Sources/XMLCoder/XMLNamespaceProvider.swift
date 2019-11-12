@@ -6,6 +6,9 @@
 //
 
 import Foundation
+#if os(Linux)
+import FoundationXML
+#endif
 
 // Must be a class: addressed by reference
 final class XMLNamespaceProvider {
@@ -57,41 +60,17 @@ extension XMLElement {
     }
     
     func addNamespace(withName namespaceName: String, stringValue: String) {
-        #if os(Linux)
-        let attributeName: String
-        if namespaceName == "" {
-            attributeName = "xmlns"
-        }
-        else {
-            attributeName = "xmlns:\(namespaceName)"
-        }
-        let attributeNode = XMLNode.attribute(withName: attributeName, stringValue: stringValue) as! XMLNode
-        self.addAttribute(attributeNode)
-        #else
         let namespaceNode = XMLNode.namespace(withName: namespaceName, stringValue: stringValue) as! XMLNode
         self.addNamespace(namespaceNode)
-        #endif
     }
     
     var qualifiedName: String? {
         guard let localName = self.localName else {
             return nil
         }
-        #if os(Linux)
-        guard let namespaces = self.namespaces else {
-            return self.localName
-        }
-        let components = self.name?.split(separator: ":", maxSplits: 1) ?? []
-        let namespacePrefix = components.count == 2 ? String(components[0]) : nil
-        guard let namespace = namespaces.first(where: { $0.name == namespacePrefix }), let namespaceURI = namespace.stringValue else {
-            return self.localName
-        }
-        return "\(namespaceURI):\(localName)"
-        #else
         guard let namespaceURI = self.uri else {
             return localName
         }
         return "\(namespaceURI):\(localName)"
-        #endif
     }
 }

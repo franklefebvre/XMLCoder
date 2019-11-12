@@ -7,6 +7,9 @@
 //
 
 import Foundation
+#if os(Linux)
+import FoundationXML
+#endif
 
 open class XMLDecoder {
     // MARK: Options
@@ -96,7 +99,7 @@ open class XMLDecoder {
             let leadingUnderscoreRange = stringKey.startIndex..<firstNonUnderscore
             let trailingUnderscoreRange = stringKey.index(after: lastNonUnderscore)..<stringKey.endIndex
             
-            var components = stringKey[keyRange].split(separator: "_")
+            let components = stringKey[keyRange].split(separator: "_")
             let joinedString : String
             if components.count == 1 {
                 // No underscores in key, leave the word as is - maybe already camel cased
@@ -192,7 +195,7 @@ open class XMLDecoder {
     
     // MARK: - Decoding Values
     
-    /// Decodes a top-level value of the given type from the given JSON representation.
+    /// Decodes a top-level value of the given type from the given XML document.
     ///
     /// - parameter type: The type of the value to decode.
     /// - parameter document: The XML document to decode from.
