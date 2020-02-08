@@ -7,6 +7,9 @@
 //
 
 import Foundation
+#if os(Linux)
+import FoundationXML
+#endif
 
 open class XMLDecoder {
     // MARK: Options
@@ -96,7 +99,7 @@ open class XMLDecoder {
             let leadingUnderscoreRange = stringKey.startIndex..<firstNonUnderscore
             let trailingUnderscoreRange = stringKey.index(after: lastNonUnderscore)..<stringKey.endIndex
             
-            var components = stringKey[keyRange].split(separator: "_")
+            let components = stringKey[keyRange].split(separator: "_")
             let joinedString : String
             if components.count == 1 {
                 // No underscores in key, leave the word as is - maybe already camel cased
@@ -161,6 +164,9 @@ open class XMLDecoder {
     /// Namespace options
     open var defaultNamespace: String? = nil
     
+    /// Document Root Tag
+    open var documentRootTag: String? = nil
+    
     /// Options set on the top-level encoder to pass down the decoding hierarchy.
     struct _Options {
         let dateDecodingStrategy: DateDecodingStrategy
@@ -192,7 +198,7 @@ open class XMLDecoder {
     
     // MARK: - Decoding Values
     
-    /// Decodes a top-level value of the given type from the given JSON representation.
+    /// Decodes a top-level value of the given type from the given XML document.
     ///
     /// - parameter type: The type of the value to decode.
     /// - parameter document: The XML document to decode from.
@@ -202,6 +208,11 @@ open class XMLDecoder {
         //let topLevel = XMLDecodingStorage(document: document)
         guard let topLevel = document.children?.first else {
             throw DecodingError.valueNotFound(type, DecodingError.Context(codingPath: [], debugDescription: "Root node not found."))
+        }
+        if let documentRootTag = documentRootTag {
+            guard let topLevelName = topLevel.name, topLevelName == documentRootTag else {
+                throw DecodingError.valueNotFound(type, DecodingError.Context(codingPath: [], debugDescription: "Unexpected root tag name."))
+            }
         }
         let decoder = _XMLDecoder(referencing: document, options: self.options) // or topLevel?
         let nodeWrapper = XMLNodeWrapper(node: topLevel)

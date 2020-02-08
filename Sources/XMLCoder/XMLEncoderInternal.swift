@@ -7,6 +7,9 @@
 //
 
 import Foundation
+#if os(Linux)
+import FoundationXML
+#endif
 
 class _XMLEncoder: Encoder {
     

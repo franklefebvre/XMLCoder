@@ -7,6 +7,9 @@
 //
 
 import Foundation
+#if os(Linux)
+import FoundationXML
+#endif
 
 open class XMLEncoder {
     
@@ -95,6 +98,7 @@ open class XMLEncoder {
     }
     
     /// The strategy to use for encoding boolean values.
+    // TODO: enum (constants, custom)
     public struct BoolEncodingStrategy {
         let falseValue: String
         let trueValue: String
@@ -116,6 +120,9 @@ open class XMLEncoder {
     open var defaultNamespace: String? = nil
     open var namespaceMap: [String: String] = [:]
     open var namespacePrefix: String = "ns"
+    
+    /// Document Root Tag
+    open var documentRootTag: String
     
     /// Options set on the top-level encoder to pass down the encoding hierarchy.
     struct _Options {
@@ -142,7 +149,9 @@ open class XMLEncoder {
     // MARK: - Constructing a XML Encoder
     
     /// Initializes `self` with default strategies.
-    public init() {}
+    public init(documentRootTag: String) {
+        self.documentRootTag = documentRootTag
+    }
     
     // MARK: - Encoding Values
     
@@ -156,7 +165,7 @@ open class XMLEncoder {
         let namespaceProvider = XMLNamespaceProvider(defaultURI: self.options.defaultNamespace, initialMapping: self.options.namespaceMap, namePrefix: self.options.namespacePrefix)
         let encoder = _XMLEncoder(options: self.options, namespaceProvider: namespaceProvider)
         try value.encode(to: encoder)
-        let element = encoder.topElement(withName: "root")
+        let element = encoder.topElement(withName: documentRootTag)
         element.addNamespaces(from: namespaceProvider)
         let document = XMLNode.document(withRootElement:element) as! XMLDocument
         return document

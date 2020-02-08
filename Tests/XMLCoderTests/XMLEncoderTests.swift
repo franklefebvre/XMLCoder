@@ -1,4 +1,7 @@
 import XCTest
+#if os(Linux)
+import FoundationXML
+#endif
 @testable import XMLCoder
 
 final class XMLEncoderTests: XCTestCase {
@@ -75,7 +78,7 @@ final class XMLEncoderTests: XCTestCase {
     
     func testNamespacesWithOptions() {
         let value = NamespaceStruct(with_namespace: "test1", without_namespace: "test2")
-        let encoder = XMLEncoder()
+        let encoder = XMLEncoder(documentRootTag: "root")
         encoder.defaultNamespace = "http://some.url.example.com/default"
         encoder.namespacePrefix = "nsns"
         let xml = try! encoder.encode(value)
@@ -244,7 +247,7 @@ final class XMLEncoderTests: XCTestCase {
     func testNilAsEmpty() {
         let value = OptionalStruct(optionalAttribute: nil, mandatoryAttribute: "attr", optionalElement: nil, mandatoryElement: "elem")
         
-        let encoder = XMLEncoder()
+        let encoder = XMLEncoder(documentRootTag: "root")
         encoder.nilEncodingStrategy = .empty
         let xml = try! encoder.encode(value)
         let result = String(data: xml.xmlData, encoding: .utf8)!
@@ -305,7 +308,7 @@ final class XMLEncoderTests: XCTestCase {
     func testBoolWithCustomStrategy() {
         let value = BoolStruct(test: true, tests: [false, true, false])
         
-        let encoder = XMLEncoder()
+        let encoder = XMLEncoder(documentRootTag: "root")
         encoder.boolEncodingStrategy = XMLEncoder.BoolEncodingStrategy(falseValue: "no", trueValue: "yes")
         let xml = try! encoder.encode(value)
         let result = String(data: xml.xmlData, encoding: .utf8)!
@@ -348,6 +351,21 @@ final class XMLEncoderTests: XCTestCase {
         XCTAssertEqual(result.substringWithXMLTag("root"), expected.substringWithXMLTag("root"))
     }
     
+    func testDocumentRootTag() {
+        let value = OneTagTestStruct(tag: "value")
+        
+        let encoder = XMLEncoder(documentRootTag: "another_root")
+        let xml = try! encoder.encode(value)
+        let result = String(data: xml.xmlData, encoding: .utf8)!
+        
+        let expected = """
+        <another_root>\
+        <tag>value</tag>\
+        </another_root>
+        """
+        XCTAssertEqual(result.substringWithXMLTag("another_root"), expected.substringWithXMLTag("another_root"))
+    }
+    
     static var allTests = [
         ("testEncodeBasicXML", testEncodeBasicXML),
         ("testAttributes", testAttributes),
@@ -367,5 +385,6 @@ final class XMLEncoderTests: XCTestCase {
         ("testBoolWithCustomStrategy", testBoolWithCustomStrategy),
         ("testData", testData),
         ("testSubclass", testSubclass),
+        ("testDocumentRootTag", testDocumentRootTag),
     ]
 }
