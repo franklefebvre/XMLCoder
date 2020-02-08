@@ -413,6 +413,48 @@ final class XMLDecoderTests: XCTestCase {
         XCTAssertEqual(result.sub, "sub")
     }
     
+    func testDocumentRootTagSuccess() throws {
+        let xml = """
+        <another_root>\
+        <tag>value</tag>\
+        </another_root>
+        """
+        let document = try XMLDocument(xmlString: xml)
+        
+        let decoder = XMLDecoder()
+        decoder.documentRootTag = "another_root"
+        let result = try decoder.decode(OneTagTestStruct.self, from: document)
+        
+        XCTAssertEqual(result.tag, "value")
+    }
+    
+    func testDocumentRootTagSuccessDefault() throws {
+        let xml = """
+        <another_root>\
+        <tag>value</tag>\
+        </another_root>
+        """
+        let document = try XMLDocument(xmlString: xml)
+        
+        let decoder = XMLDecoder()
+        let result = try decoder.decode(OneTagTestStruct.self, from: document)
+        
+        XCTAssertEqual(result.tag, "value")
+    }
+    
+    func testDocumentRootTagFailure() throws {
+        let xml = """
+        <another_root>\
+        <tag>value</tag>\
+        </another_root>
+        """
+        let document = try XMLDocument(xmlString: xml)
+        
+        let decoder = XMLDecoder()
+        decoder.documentRootTag = "not_found"
+        XCTAssertThrowsError(try decoder.decode(OneTagTestStruct.self, from: document))
+    }
+    
     static var allTests = [
         ("testDecodeBasicXML", testDecodeBasicXML),
         ("testAttributes", testAttributes),
@@ -437,6 +479,9 @@ final class XMLDecoderTests: XCTestCase {
         ("testBoolError", testBoolError),
         ("testData", testData),
         ("testSubclass", testSubclass),
+        ("testDocumentRootTagSuccess", testDocumentRootTagSuccess),
+        ("testDocumentRootTagSuccessDefault", testDocumentRootTagSuccessDefault),
+        ("testDocumentRootTagFailure", testDocumentRootTagFailure),
     ]
 }
 

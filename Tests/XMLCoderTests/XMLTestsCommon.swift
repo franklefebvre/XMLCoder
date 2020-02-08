@@ -23,7 +23,7 @@ extension String {
 
 struct Test {
     static func xmlString<T: Encodable>(_ value: T) -> String {
-        let encoder = XMLEncoder()
+        let encoder = XMLEncoder(documentRootTag: "root")
         let xml = try! encoder.encode(value)
         let result = String(data: xml.xmlData, encoding: .utf8)!
         return result

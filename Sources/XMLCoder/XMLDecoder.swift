@@ -164,6 +164,9 @@ open class XMLDecoder {
     /// Namespace options
     open var defaultNamespace: String? = nil
     
+    /// Document Root Tag
+    open var documentRootTag: String? = nil
+    
     /// Options set on the top-level encoder to pass down the decoding hierarchy.
     struct _Options {
         let dateDecodingStrategy: DateDecodingStrategy
@@ -205,6 +208,11 @@ open class XMLDecoder {
         //let topLevel = XMLDecodingStorage(document: document)
         guard let topLevel = document.children?.first else {
             throw DecodingError.valueNotFound(type, DecodingError.Context(codingPath: [], debugDescription: "Root node not found."))
+        }
+        if let documentRootTag = documentRootTag {
+            guard let topLevelName = topLevel.name, topLevelName == documentRootTag else {
+                throw DecodingError.valueNotFound(type, DecodingError.Context(codingPath: [], debugDescription: "Unexpected root tag name."))
+            }
         }
         let decoder = _XMLDecoder(referencing: document, options: self.options) // or topLevel?
         let nodeWrapper = XMLNodeWrapper(node: topLevel)

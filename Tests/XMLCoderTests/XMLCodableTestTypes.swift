@@ -8,6 +8,12 @@
 import XCTest
 @testable import XMLCoder
 
+// One Tag Tests
+
+struct OneTagTestStruct: Codable {
+    var tag: String
+}
+
 // Basic tests
 
 struct BasicTestStruct: Codable {

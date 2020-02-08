@@ -17,7 +17,7 @@ CodableXML relies on the Swift Package Manager for integration in your projects.
 - add this line to the `dependencies` list in your `Package.swift` file:
 
 ```
-.package(url: "https://github.com/franklefebvre/XMLCoder.git", equal: "0.2.0"),
+.package(url: "https://github.com/franklefebvre/XMLCoder.git", equal: "0.3.0"),
 ```
 - add `XMLCoder` dependency to your target:
 
@@ -49,7 +49,7 @@ Assuming `Document` conforms to `Encodable`, encoding can be as simple as this:
 
 ```
 func encode(doc: Document) throws -> String {
-    let encoder = XMLEncoder()
+    let encoder = XMLEncoder(documentRootTag: "root")
     let xmlDocument = try encoder.encode(doc)
     // here xmlDocument is of type XMLDocument
     guard let result = String(data: xmlDocument.xmlData, encoding: .utf8) else {
@@ -115,7 +115,7 @@ struct NamespaceStruct: Codable {
 }
 
 let value = NamespaceStruct(key1: "element1", key2: "element2")
-let encoder = XMLEncoder()
+let encoder = XMLEncoder(documentRootTag: "root")
 let xmlDocument = try encoder.encode(value)
 let result = String(data: xmlDocument.xmlData, encoding: .utf8)
 ```
@@ -176,7 +176,7 @@ struct AttributeStruct: Codable {
 }
 
 let value = AttributeStruct(key1: "value1", key2: "value2")
-let encoder = XMLEncoder()
+let encoder = XMLEncoder(documentRootTag: "root")
 let xmlDocument = try encoder.encode(value)
 let result = String(data: xmlDocument.xmlData, encoding: .utf8)
 ```
@@ -214,7 +214,7 @@ struct ArrayStruct: Codable {
 }
 
 let value = ArrayStruct(key3: "value3", key4: ["one", "two", "three"])
-let encoder = XMLEncoder()
+let encoder = XMLEncoder(documentRootTag: "root")
 let xmlDocument = try encoder.encode(value)
 let result = String(data: xmlDocument.xmlData, encoding: .utf8)
 ```
@@ -236,21 +236,23 @@ The result string will contain something like:
 
 ### Root Element
 
-In the current implementation, `XMLEncoder` encodes the document root as `root`, and `XMLDecoder` ignores the root key.
+`XMLEncoder` must be initialized with the name of tag representing the document root.
 
-*This is subject to change in a future implementation.*
+By default `XMLDecoder` ignores the root tag in the XML document. However it is possible to specify the expected name of the root tag with the `documentRootTag` property.
 
 ## Coding Strategies
 
 ### Key transformations
 
-By default, keys are encoded and decoded as their names, without transformation. However it is possible to change this behavior by using the `keyEncodingStrategy` attribute on `XMLEncoder`, and the `keyDecodingStrategy` attribute on `XMLDecoder`.
+By default, keys in Swift types are encoded and decoded as XML tags with the same names, without transformation. However it is possible to change this behavior globally by using the `keyEncodingStrategy` attribute on `XMLEncoder`, and the `keyDecodingStrategy` attribute on `XMLDecoder`.
 
 Possible settings are:
 
 - `useDefaultKeys`: this is the default behavior, as described above.
-- `convertToSnakeCase`, `convertFromSnakeCase`: allow to represent the keys in camelCase in the Swift types, and to have them in snake_case in the XML document.
+- `convertToSnakeCase`, `convertFromSnakeCase`: allow to represent the keys in camelCase in the Swift types, and to have snake_case tags in the XML document.
 - `custom`: allows to provide a closure to implement the transformations.
+
+Besides this global mechanism, it is still possible to convert between keys and tags on a case by base basis, e.g. by providing explicitly strings for the enum cases in the CodingKeys enum.
 
 ### Value conversions
 
@@ -267,7 +269,7 @@ Possible settings are:
 
 #### Bool
 
-`XMLEncoder` provides a `boolEncodingStrategy` attribute, and `XMLDecoder` provides a symmetrical `boolDecodingStrategy` attribute. These attributes are defined as two-element structs containing the strings used to represent `false` and `true` values.
+`XMLEncoder` exposes a `boolEncodingStrategy` property, and `XMLDecoder` exposes a symmetrical `boolDecodingStrategy` property. These properties are defined as two-element structs containing the strings used to represent `false` and `true` values.
 
 By default `false` is represented as `"0"`, and `true` is represented as `"1"`.
 
