@@ -11,7 +11,7 @@ import Foundation
 import FoundationXML
 #endif
 
-enum XMLNodeType {
+public enum XMLNodeType {
     case element
     case attribute
     case inline
@@ -124,15 +124,15 @@ class RootXMLStorage: XMLEncodingStorage {
     }
 }
 
-protocol XMLQualifiedKey {
+public protocol XMLQualifiedKey {
     var namespace: String? { get }
 }
 
-protocol XMLTypedKey {
+public protocol XMLTypedKey {
     var nodeType: XMLNodeType { get }
 }
 
-protocol XMLArrayKey {
+public protocol XMLArrayKey {
     static var elementName: String { get }
 }
 
