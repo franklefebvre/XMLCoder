@@ -394,7 +394,7 @@ final class XMLDecoderTests: XCTestCase {
         
         let result = try Test.decode(DataStruct.self, from: xml)
         
-        let data = Data(bytes: [0x42, 0x00, 0xff])
+        let data = Data([0x42, 0x00, 0xff])
         XCTAssertEqual(result.element, data)
         XCTAssertEqual(result.elements, [data, data])
     }

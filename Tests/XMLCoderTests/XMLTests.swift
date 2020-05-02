@@ -59,8 +59,7 @@ final class XMLTests: XCTestCase {
         XCTAssertEqual(ns1.stringValue, "http://namespace.example.com/ns/1")
     }
     
-    func testNamespaceImplementationOnLinux() {
-        #if os(Linux)
+    func testNamespaceAvailability() {
         let element = XMLNode.element(withName: "element") as! XMLElement
         let namespaceNode = XMLNode.namespace(withName: "ns1", stringValue: "http://namespace.example.com/ns/1") as! XMLNode
         element.addNamespace(namespaceNode)
@@ -72,14 +71,13 @@ final class XMLTests: XCTestCase {
         </element>
         """
         
-        XCTAssertNotEqual(expectedString.substringWithXMLTag("element"), finalString?.substringWithXMLTag("element"), "Are namespaces implemented on Linux?")
-        #endif
+        XCTAssertEqual(expectedString.substringWithXMLTag("element"), finalString?.substringWithXMLTag("element"), "Are namespaces implemented on Linux?")
     }
     
     static var allTests = [
         ("testWhitespace", testWhitespace),
         ("testCreateNamespaces", testCreateNamespaces),
         ("testParseNamespaces", testParseNamespaces),
-        ("testNamespaceImplementationOnLinux", testNamespaceImplementationOnLinux),
+        ("testNamespaceAvailability", testNamespaceAvailability),
     ]
 }
