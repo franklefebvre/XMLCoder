@@ -24,5 +24,6 @@ let package = Package(
         .testTarget(
             name: "XMLCoderTests",
             dependencies: ["XMLCoder"]),
-    ]
+    ],
+    swiftLanguageVersions: [.v5]
 )

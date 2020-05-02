@@ -7,7 +7,7 @@
 //
 
 import Foundation
-#if os(Linux)
+#if canImport(FoundationXML)
 import FoundationXML
 #endif
 
@@ -84,7 +84,7 @@ open class XMLDecoder {
             guard !stringKey.isEmpty else { return stringKey }
             
             // Find the first non-underscore character
-            guard let firstNonUnderscore = stringKey.index(where: { $0 != "_" }) else {
+            guard let firstNonUnderscore = stringKey.firstIndex(where: { $0 != "_" }) else {
                 // Reached the end without finding an _
                 return stringKey
             }
