@@ -323,7 +323,7 @@ final class XMLEncoderTests: XCTestCase {
     }
     
     func testData() {
-        let data = Data(bytes: [0x42, 0x00, 0xff])
+        let data = Data([0x42, 0x00, 0xff])
         let value = DataStruct(element: data, elements: [data, data])
         
         let result = Test.xmlString(value)

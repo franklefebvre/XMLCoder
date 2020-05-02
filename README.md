@@ -6,7 +6,7 @@ This package allows to encode/decode arbitrary XML documents through the Codable
 
 **Supported Platforms:** macOS 10.12+, iOS 10+, Ubuntu 18.04.
 
-**Supported Swift versions:** 5.0, 5.1.
+**Supported Swift versions:** 5.1, 5.2.
 
 ## Usage
 
