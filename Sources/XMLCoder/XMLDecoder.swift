@@ -73,6 +73,12 @@ open class XMLDecoder {
     /// The strategy to use for reverse-encoding keys. Defaults to `.useDefaultKeys`.
     open var keyCodingStrategy: XMLCoder.KeyCodingStrategy = .useDefaultKeys
     
+    /// The strategy to use for reverse-encoding XML element names. Defaults to setting defined by `keyCodingStrategy`.
+    open var elementNameCodingStrategy: XMLCoder.KeyCodingStrategy? = nil
+    
+    /// The strategy to use for reverse-encoding XML attribute names. Defaults to setting defined by `keyCodingStrategy`.
+    open var attributeNameCodingStrategy: XMLCoder.KeyCodingStrategy? = nil
+    
     /// The strategy to use for decoding optionals. Defaults to `.missing`.
     open var nilDecodingStrategy: NilDecodingStrategy = .missing
     
@@ -93,7 +99,8 @@ open class XMLDecoder {
         let dateDecodingStrategy: DateDecodingStrategy
         let dataDecodingStrategy: DataDecodingStrategy
         let nonConformingFloatDecodingStrategy: NonConformingFloatDecodingStrategy
-        let keyCodingStrategy: XMLCoder.KeyCodingStrategy
+        let elementNameCodingStrategy: XMLCoder.KeyCodingStrategy
+        let attributeNameCodingStrategy: XMLCoder.KeyCodingStrategy
         let nilDecodingStrategy: NilDecodingStrategy
         let boolDecodingStrategy: BoolDecodingStrategy
         let userInfo: [CodingUserInfoKey : Any]
@@ -105,7 +112,8 @@ open class XMLDecoder {
         return _Options(dateDecodingStrategy: dateDecodingStrategy,
                         dataDecodingStrategy: dataDecodingStrategy,
                         nonConformingFloatDecodingStrategy: nonConformingFloatDecodingStrategy,
-                        keyCodingStrategy: keyCodingStrategy,
+                        elementNameCodingStrategy: elementNameCodingStrategy ?? keyCodingStrategy,
+                        attributeNameCodingStrategy: attributeNameCodingStrategy ?? keyCodingStrategy,
                         nilDecodingStrategy: nilDecodingStrategy,
                         boolDecodingStrategy: boolDecodingStrategy,
                         userInfo: userInfo,
