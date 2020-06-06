@@ -455,6 +455,30 @@ final class XMLDecoderTests: XCTestCase {
         XCTAssertThrowsError(try decoder.decode(OneTagTestStruct.self, from: document))
     }
     
+    func testUppercaseKeys() throws {
+        func uppercaseKey(_ codingPath: [CodingKey]) -> String {
+            return codingPath.last?.stringValue.uppercased() ?? ""
+        }
+        
+        let xml = """
+        <ROOT>
+        <INTEGER_ELEMENT>123</INTEGER_ELEMENT>
+        <STRING_ELEMENT>hello</STRING_ELEMENT>
+        <EMBEDDED_ELEMENT><SOME_ELEMENT>embedded</SOME_ELEMENT></EMBEDDED_ELEMENT>
+        <STRING_ARRAY/>
+        <INT_ARRAY/>
+        </ROOT>
+        """
+        let document = try XMLDocument(xmlString: xml)
+        
+        let decoder = XMLDecoder()
+        decoder.keyCodingStrategy = .custom(uppercaseKey)
+        let result = try decoder.decode(BasicTestStruct.self, from: document)
+        
+        XCTAssertEqual(result.integer_element, 123)
+        XCTAssertEqual(result.string_element, "hello")
+    }
+    
     static var allTests = [
         ("testDecodeBasicXML", testDecodeBasicXML),
         ("testAttributes", testAttributes),
@@ -482,6 +506,7 @@ final class XMLDecoderTests: XCTestCase {
         ("testDocumentRootTagSuccess", testDocumentRootTagSuccess),
         ("testDocumentRootTagSuccessDefault", testDocumentRootTagSuccessDefault),
         ("testDocumentRootTagFailure", testDocumentRootTagFailure),
+        ("testUppercaseKeys", testUppercaseKeys),
     ]
 }
 

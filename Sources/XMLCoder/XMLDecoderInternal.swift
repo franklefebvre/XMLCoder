@@ -161,7 +161,7 @@ class _XMLDecoder: Decoder {
         func contains(_ key: Key) -> Bool {
             switch _nodeType(key) {
             case .element, .array(_):
-                let qualifiedKey = qualifiedName(forKey: key)
+                let qualifiedKey = qualifiedName(forKey: key, applyingStrategy: decoder.options.keyCodingStrategy)
                 return elements[qualifiedKey] != nil
             case .attribute:
                 return attributes[key.stringValue] != nil
@@ -170,8 +170,8 @@ class _XMLDecoder: Decoder {
             }
         }
         
-        func qualifiedName(forKey key: CodingKey) -> String {
-            let localName = key.stringValue
+        func qualifiedName(forKey key: CodingKey, applyingStrategy codingStrategy: XMLCoder.KeyCodingStrategy?) -> String {
+            let localName = codingStrategy?.encodedName(for: codingPath + [key]) ?? key.stringValue
             if let qualifiedKey = key as? XMLQualifiedKey, let namespace = qualifiedKey.namespace {
                 return "\(namespace):\(localName)"
             }
@@ -184,7 +184,7 @@ class _XMLDecoder: Decoder {
         func node(forKey key: Key) -> XMLNodeWrapper? {
             switch _nodeType(key) {
             case .element:
-                let qualifiedKey = qualifiedName(forKey: key)
+                let qualifiedKey = qualifiedName(forKey: key, applyingStrategy: decoder.options.keyCodingStrategy)
                 guard let node = elements[qualifiedKey] else {
                     return nil
                 }
@@ -202,7 +202,7 @@ class _XMLDecoder: Decoder {
                 decoder.storage.locateNextTextNode()
                 return XMLNodeWrapper(node: node)
             case .array(let elementName):
-                let qualifiedKey = qualifiedName(forKey: key)
+                let qualifiedKey = qualifiedName(forKey: key, applyingStrategy: decoder.options.keyCodingStrategy)
                 guard let node = elements[qualifiedKey] else {
                     return nil
                 }

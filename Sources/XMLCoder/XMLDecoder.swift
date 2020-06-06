@@ -57,75 +57,6 @@ open class XMLDecoder {
         case convertFromString(positiveInfinity: String, negativeInfinity: String, nan: String)
     }
     
-    /// The strategy to use for automatically changing the value of keys before decoding.
-    public enum KeyDecodingStrategy {
-        /// Use the keys specified by each type. This is the default strategy.
-        case useDefaultKeys
-        
-        /// Convert from "snake_case_keys" to "camelCaseKeys" before attempting to match a key with the one specified by each type.
-        /// 
-        /// The conversion to upper case uses `Locale.system`, also known as the ICU "root" locale. This means the result is consistent regardless of the current user's locale and language preferences.
-        ///
-        /// Converting from snake case to camel case:
-        /// 1. Capitalizes the word starting after each `_`
-        /// 2. Removes all `_`
-        /// 3. Preserves starting and ending `_` (as these are often used to indicate private variables or other metadata).
-        /// For example, `one_two_three` becomes `oneTwoThree`. `_one_two_three_` becomes `_oneTwoThree_`.
-        ///
-        /// - Note: Using a key decoding strategy has a nominal performance cost, as each string key has to be inspected for the `_` character.
-        case convertFromSnakeCase
-        
-        /// Provide a custom conversion from the key in the encoded JSON to the keys specified by the decoded types.
-        /// The full path to the current decoding position is provided for context (in case you need to locate this key within the payload). The returned key is used in place of the last component in the coding path before decoding.
-        /// If the result of the conversion is a duplicate key, then only one value will be present in the container for the type to decode from.
-        case custom((_ codingPath: [CodingKey]) -> CodingKey)
-        
-        fileprivate static func _convertFromSnakeCase(_ stringKey: String) -> String {
-            guard !stringKey.isEmpty else { return stringKey }
-            
-            // Find the first non-underscore character
-            guard let firstNonUnderscore = stringKey.firstIndex(where: { $0 != "_" }) else {
-                // Reached the end without finding an _
-                return stringKey
-            }
-            
-            // Find the last non-underscore character
-            var lastNonUnderscore = stringKey.index(before: stringKey.endIndex)
-            while lastNonUnderscore > firstNonUnderscore && stringKey[lastNonUnderscore] == "_" {
-                stringKey.formIndex(before: &lastNonUnderscore)
-            }
-            
-            let keyRange = firstNonUnderscore...lastNonUnderscore
-            let leadingUnderscoreRange = stringKey.startIndex..<firstNonUnderscore
-            let trailingUnderscoreRange = stringKey.index(after: lastNonUnderscore)..<stringKey.endIndex
-            
-            let components = stringKey[keyRange].split(separator: "_")
-            let joinedString : String
-            if components.count == 1 {
-                // No underscores in key, leave the word as is - maybe already camel cased
-                joinedString = String(stringKey[keyRange])
-            } else {
-                joinedString = ([components[0].lowercased()] + components[1...].map { $0.capitalized }).joined()
-            }
-            
-            // Do a cheap isEmpty check before creating and appending potentially empty strings
-            let result : String
-            if (leadingUnderscoreRange.isEmpty && trailingUnderscoreRange.isEmpty) {
-                result = joinedString
-            } else if (!leadingUnderscoreRange.isEmpty && !trailingUnderscoreRange.isEmpty) {
-                // Both leading and trailing underscores
-                result = String(stringKey[leadingUnderscoreRange]) + joinedString + String(stringKey[trailingUnderscoreRange])
-            } else if (!leadingUnderscoreRange.isEmpty) {
-                // Just leading
-                result = String(stringKey[leadingUnderscoreRange]) + joinedString
-            } else {
-                // Just trailing
-                result = joinedString + String(stringKey[trailingUnderscoreRange])
-            }
-            return result
-        }
-    }
-    
     /// The strategy to use for decoding optional elements and attributes.
     public enum NilDecodingStrategy {
         /// Decode missing attribute or element as nil. This is the default strategy.
@@ -149,8 +80,8 @@ open class XMLDecoder {
     /// The strategy to use in decoding non-conforming numbers. Defaults to `.throw`.
     open var nonConformingFloatDecodingStrategy: NonConformingFloatDecodingStrategy = .throw
     
-    /// The strategy to use for decoding keys. Defaults to `.useDefaultKeys`.
-    open var keyDecodingStrategy: KeyDecodingStrategy = .useDefaultKeys
+    /// The strategy to use for reverse-encoding keys. Defaults to `.useDefaultKeys`.
+    open var keyCodingStrategy: XMLCoder.KeyCodingStrategy = .useDefaultKeys
     
     /// The strategy to use for decoding optionals. Defaults to `.missing`.
     open var nilDecodingStrategy: NilDecodingStrategy = .missing
@@ -172,7 +103,7 @@ open class XMLDecoder {
         let dateDecodingStrategy: DateDecodingStrategy
         let dataDecodingStrategy: DataDecodingStrategy
         let nonConformingFloatDecodingStrategy: NonConformingFloatDecodingStrategy
-        let keyDecodingStrategy: KeyDecodingStrategy
+        let keyCodingStrategy: XMLCoder.KeyCodingStrategy
         let nilDecodingStrategy: NilDecodingStrategy
         let boolDecodingStrategy: BoolDecodingStrategy
         let userInfo: [CodingUserInfoKey : Any]
@@ -184,7 +115,7 @@ open class XMLDecoder {
         return _Options(dateDecodingStrategy: dateDecodingStrategy,
                         dataDecodingStrategy: dataDecodingStrategy,
                         nonConformingFloatDecodingStrategy: nonConformingFloatDecodingStrategy,
-                        keyDecodingStrategy: keyDecodingStrategy,
+                        keyCodingStrategy: keyCodingStrategy,
                         nilDecodingStrategy: nilDecodingStrategy,
                         boolDecodingStrategy: boolDecodingStrategy,
                         userInfo: userInfo,
