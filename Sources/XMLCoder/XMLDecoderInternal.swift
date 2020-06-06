@@ -934,10 +934,20 @@ extension _XMLDecoder {
     }
     
     func decodeValue(_ type: Date.Type, from string: String) throws -> Date {
-        guard let value = dateFormatter.date(from: string) else { // TODO: use DateDecodingStrategy
-            throw DecodingError.valueNotFound(type, DecodingError.Context(codingPath: self.codingPath, debugDescription: "Could not decode \(type)."))
+        switch options.dateDecodingStrategy {
+        case .iso8601:
+            guard let value = dateFormatter.date(from: string) else {
+                throw DecodingError.valueNotFound(type, DecodingError.Context(codingPath: self.codingPath, debugDescription: "Could not decode \(type)."))
+            }
+            return value
+        case .formatted(let customDateFormatter):
+            guard let value = customDateFormatter.date(from: string) else {
+                throw DecodingError.valueNotFound(type, DecodingError.Context(codingPath: self.codingPath, debugDescription: "Could not decode \(type)."))
+            }
+            return value
+        case .custom(let closure):
+            return try closure(self)
         }
-        return value
     }
     
     func decodeValue(_ type: Data.Type, from string: String) throws -> Data {

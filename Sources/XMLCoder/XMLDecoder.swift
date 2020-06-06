@@ -16,17 +16,7 @@ open class XMLDecoder {
     
     /// The strategy to use for decoding `Date` values.
     public enum DateDecodingStrategy {
-        /// Defer to `Date` for decoding. This is the default strategy.
-        case deferredToDate
-        
-        /// Decode the `Date` as a UNIX timestamp from a number.
-        case secondsSince1970
-        
-        /// Decode the `Date` as UNIX millisecond timestamp from a number.
-        case millisecondsSince1970
-        
-        /// Decode the `Date` as an ISO-8601-formatted string (in RFC 3339 format).
-        @available(macOS 10.12, iOS 10.0, watchOS 3.0, tvOS 10.0, *)
+        /// Decode the `Date` as an ISO-8601-formatted string (in RFC 3339 format). This is the default strategy.
         case iso8601
         
         /// Decode the `Date` as a string parsed by the given formatter.
@@ -72,7 +62,7 @@ open class XMLDecoder {
     }
     
     /// The strategy to use in decoding dates. Defaults to `.deferredToDate`.
-    open var dateDecodingStrategy: DateDecodingStrategy = .deferredToDate
+    open var dateDecodingStrategy: DateDecodingStrategy = .iso8601
     
     /// The strategy to use in decoding binary data. Defaults to `.base64`.
     open var dataDecodingStrategy: DataDecodingStrategy = .base64

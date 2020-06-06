@@ -328,6 +328,33 @@ final class XMLDecoderTests: XCTestCase {
         XCTAssertEqual(result.urls, [url, url])
     }
     
+    func testDateWithFormat() throws {
+        let xml = """
+        <root>\
+        <date>1970-01-01T00:00:00.123Z</date>\
+        <dates><element>1970-01-01T00:00:00.456Z</element><element>1970-01-01T00:00:00.789Z</element></dates>\
+        <url>https://swift.org/</url>\
+        <urls/>\
+        </root>
+        """
+        let document = try XMLDocument(xmlString: xml)
+        
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.timeZone = TimeZone(secondsFromGMT: 0)
+        formatter.dateFormat = "yyyy'-'MM'-'dd'T'HH':'mm':'ss'.'SSSXX"
+        
+        let decoder = XMLDecoder()
+        decoder.dateDecodingStrategy = .formatted(formatter)
+        let result = try decoder.decode(DateURLStruct.self, from: document)
+        
+        let date123 = Date(timeIntervalSince1970: 0.123)
+        let date456 = Date(timeIntervalSince1970: 0.456)
+        let date789 = Date(timeIntervalSince1970: 0.789)
+        XCTAssertEqual(result.date, date123)
+        XCTAssertEqual(result.dates, [date456, date789])
+    }
+    
     func testBoolWithDefaultStrategy() throws {
         let xml = """
         <root>\
@@ -498,6 +525,7 @@ final class XMLDecoderTests: XCTestCase {
         ("testNilAsEmpty", testNilAsEmpty),
         ("testFloatAndDouble", testFloatAndDouble),
         ("testDateAndURL", testDateAndURL),
+        ("testDateWithFormat", testDateWithFormat),
         ("testBoolWithDefaultStrategy", testBoolWithDefaultStrategy),
         ("testBoolWithCustomStrategy", testBoolWithCustomStrategy),
         ("testBoolError", testBoolError),
