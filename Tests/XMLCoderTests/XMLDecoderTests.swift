@@ -426,6 +426,24 @@ final class XMLDecoderTests: XCTestCase {
         XCTAssertEqual(result.elements, [data, data])
     }
     
+    func testDataWithWhitespace() throws {
+        let xml = """
+        <root>\
+        <element>
+        QgD/ </element>\
+        <elements><element>
+        QgD/
+        </element><element> Q g D / </element></elements>\
+        </root>
+        """
+        
+        let result = try Test.decode(DataStruct.self, from: xml)
+        
+        let data = Data([0x42, 0x00, 0xff])
+        XCTAssertEqual(result.element, data)
+        XCTAssertEqual(result.elements, [data, data])
+    }
+    
     func testSubclass() throws {
         let xml = """
         <root>\
@@ -596,6 +614,7 @@ final class XMLDecoderTests: XCTestCase {
         ("testBoolWithCustomStrategy", testBoolWithCustomStrategy),
         ("testBoolError", testBoolError),
         ("testData", testData),
+        ("testDataWithWhitespace", testDataWithWhitespace),
         ("testSubclass", testSubclass),
         ("testDocumentRootTagSuccess", testDocumentRootTagSuccess),
         ("testDocumentRootTagSuccessDefault", testDocumentRootTagSuccessDefault),

@@ -339,7 +339,7 @@ class _XMLDecoder: Decoder {
             self.decoder.codingPath.append(key)
             defer { self.decoder.codingPath.removeLast() }
             let string = try decode(String.self, forKey: key)
-            return try decoder.decodeValue(Data.self, from: string)
+            return try decoder.decodeValue(Data.self, from: string.filter { !$0.isWhitespace })
         }
         
         func decodeURL(forKey key: Key) throws -> URL {
@@ -663,7 +663,7 @@ class _XMLDecoder: Decoder {
             guard let string = try self.decodeStringAtCurrentIndex() else {
                 throw DecodingError.valueNotFound(Data.self, DecodingError.Context(codingPath: self.decoder.codingPath, debugDescription: "Expected \(Data.self) but found empty node instead."))
             }
-            let value = try decoder.decodeValue(Data.self, from: string)
+            let value = try decoder.decodeValue(Data.self, from: string.filter { !$0.isWhitespace })
             self.currentIndex += 1
             return value
         }
@@ -818,7 +818,7 @@ extension _XMLDecoder: SingleValueDecodingContainer {
     
     func decodeData() throws -> Data {
         let string = try self.decode(String.self)
-        return try decodeValue(Data.self, from: string)
+        return try decodeValue(Data.self, from: string.filter { !$0.isWhitespace })
     }
     
     func decodeURL() throws -> URL {
