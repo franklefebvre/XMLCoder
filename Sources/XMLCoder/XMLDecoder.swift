@@ -28,23 +28,14 @@ open class XMLDecoder {
     
     /// The strategy to use for decoding `Data` values.
     public enum DataDecodingStrategy {
-        /// Defer to `Data` for decoding.
-        case deferredToData
-        
         /// Decode the `Data` from a Base64-encoded string. This is the default strategy.
         case base64
         
+        /// Decode the `Data` from a hex-encoded string.
+        case hex
+        
         /// Decode the `Data` as a custom value decoded by the given closure.
         case custom((_ decoder: Decoder) throws -> Data)
-    }
-    
-    /// The strategy to use for non-JSON-conforming floating-point values (IEEE 754 infinity and NaN).
-    public enum NonConformingFloatDecodingStrategy {
-        /// Throw upon encountering non-conforming values. This is the default strategy.
-        case `throw`
-        
-        /// Decode the values from the given representation strings.
-        case convertFromString(positiveInfinity: String, negativeInfinity: String, nan: String)
     }
     
     /// The strategy to use for decoding optional elements and attributes.
@@ -66,9 +57,6 @@ open class XMLDecoder {
     
     /// The strategy to use in decoding binary data. Defaults to `.base64`.
     open var dataDecodingStrategy: DataDecodingStrategy = .base64
-    
-    /// The strategy to use in decoding non-conforming numbers. Defaults to `.throw`.
-    open var nonConformingFloatDecodingStrategy: NonConformingFloatDecodingStrategy = .throw
     
     /// The strategy to use for reverse-encoding keys. Defaults to `.useDefaultKeys`.
     open var keyCodingStrategy: XMLCoder.KeyCodingStrategy = .useDefaultKeys
@@ -98,7 +86,6 @@ open class XMLDecoder {
     struct _Options {
         let dateDecodingStrategy: DateDecodingStrategy
         let dataDecodingStrategy: DataDecodingStrategy
-        let nonConformingFloatDecodingStrategy: NonConformingFloatDecodingStrategy
         let elementNameCodingStrategy: XMLCoder.KeyCodingStrategy
         let attributeNameCodingStrategy: XMLCoder.KeyCodingStrategy
         let nilDecodingStrategy: NilDecodingStrategy
@@ -111,7 +98,6 @@ open class XMLDecoder {
     var options: _Options {
         return _Options(dateDecodingStrategy: dateDecodingStrategy,
                         dataDecodingStrategy: dataDecodingStrategy,
-                        nonConformingFloatDecodingStrategy: nonConformingFloatDecodingStrategy,
                         elementNameCodingStrategy: elementNameCodingStrategy ?? keyCodingStrategy,
                         attributeNameCodingStrategy: attributeNameCodingStrategy ?? keyCodingStrategy,
                         nilDecodingStrategy: nilDecodingStrategy,

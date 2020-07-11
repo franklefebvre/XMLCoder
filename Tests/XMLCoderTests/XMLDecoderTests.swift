@@ -444,6 +444,24 @@ final class XMLDecoderTests: XCTestCase {
         XCTAssertEqual(result.elements, [data, data])
     }
     
+    func testDataFromHex() throws {
+        let xml = """
+        <root>\
+        <element>4200ff</element>\
+        <elements><element>42 00 ff</element><element>4200FF</element></elements>\
+        </root>
+        """
+        let document = try XMLDocument(xmlString: xml)
+        
+        let decoder = XMLDecoder()
+        decoder.dataDecodingStrategy = .hex
+        let result = try decoder.decode(DataStruct.self, from: document)
+        
+        let data = Data([0x42, 0x00, 0xff])
+        XCTAssertEqual(result.element, data)
+        XCTAssertEqual(result.elements, [data, data])
+    }
+    
     func testSubclass() throws {
         let xml = """
         <root>\
@@ -615,6 +633,7 @@ final class XMLDecoderTests: XCTestCase {
         ("testBoolError", testBoolError),
         ("testData", testData),
         ("testDataWithWhitespace", testDataWithWhitespace),
+        ("testDataFromHex", testDataFromHex),
         ("testSubclass", testSubclass),
         ("testDocumentRootTagSuccess", testDocumentRootTagSuccess),
         ("testDocumentRootTagSuccessDefault", testDocumentRootTagSuccessDefault),

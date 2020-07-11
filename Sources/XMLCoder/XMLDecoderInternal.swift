@@ -959,10 +959,20 @@ extension _XMLDecoder {
     }
     
     func decodeValue(_ type: Data.Type, from string: String) throws -> Data {
-        guard let value = Data(base64Encoded: string) else { // TODO: use DataDecodingStrategy
-            throw DecodingError.valueNotFound(type, DecodingError.Context(codingPath: self.codingPath, debugDescription: "Could not decode \(type)."))
+        switch options.dataDecodingStrategy {
+        case .base64:
+            guard let value = Data(base64Encoded: string) else {
+                throw DecodingError.valueNotFound(type, DecodingError.Context(codingPath: self.codingPath, debugDescription: "Could not decode \(type)."))
+            }
+            return value
+        case .hex:
+            guard let value = Data(hexEncoded: string) else {
+                throw DecodingError.valueNotFound(type, DecodingError.Context(codingPath: self.codingPath, debugDescription: "Could not decode \(type)."))
+            }
+            return value
+        case .custom(let closure):
+            return try closure(self)
         }
-        return value
     }
     
     func decodeValue(_ type: URL.Type, from string: String) throws -> URL {
