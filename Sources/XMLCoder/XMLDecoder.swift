@@ -52,7 +52,7 @@ open class XMLDecoder {
         let trueValue: String
     }
     
-    /// The strategy to use in decoding dates. Defaults to `.deferredToDate`.
+    /// The strategy to use in decoding dates. Defaults to `.iso8601`.
     open var dateDecodingStrategy: DateDecodingStrategy = .iso8601
     
     /// The strategy to use in decoding binary data. Defaults to `.base64`.

@@ -111,22 +111,10 @@ class _XMLEncoder: Encoder {
                 if let name = encoder.namespaceProvider.name(for: namespace) {
                     // For now we'll move all namespace declarations up to the root level.
                     // TODO: add namespace URI to current storage, unless already declared in hierarchy.
-                    return "\(name):\(key.stringValue)"
+                    return "\(name):\(convertedName(forKey: key))"
                 }
             }
-            return key.stringValue
-            
-            #if false
-            switch encoder.options.keyEncodingStrategy {
-            case .useDefaultKeys:
-                return key
-            case .convertToSnakeCase:
-                let newKeyString = XMLEncoder.KeyEncodingStrategy._convertToSnakeCase(key.stringValue)
-                return _XMLKey(stringValue: newKeyString, intValue: key.intValue)
-            case .custom(let converter):
-                return converter(codingPath + [key])
-            }
-            #endif
+            return convertedName(forKey: key)
         }
         
         private func _nodeType(_ key: CodingKey) -> XMLNodeType {
@@ -134,6 +122,19 @@ class _XMLEncoder: Encoder {
                 return .element
             }
             return typedKey.nodeType
+        }
+        
+        func convertedName(forKey key: CodingKey) -> String {
+            let codingStrategy: XMLCoder.KeyCodingStrategy?
+            switch _nodeType(key) {
+            case .element, .array(_):
+                codingStrategy = encoder.options.elementNameCodingStrategy
+            case .attribute:
+                codingStrategy = encoder.options.attributeNameCodingStrategy
+            case .inline:
+                codingStrategy = nil
+            }
+            return codingStrategy?.encodedName(for: codingPath + [key]) ?? key.stringValue
         }
         
         mutating func encodeNil(forKey key: Key) throws {
@@ -524,7 +525,7 @@ class _XMLEncoder: Encoder {
             return converted(value as! URL)
         }
         else if T.self == Data.self {
-            return converted(value as! Data)
+            return try converted(value as! Data)
         }
         else if T.self == Bool.self {
             return converted(value as! Bool)
@@ -535,15 +536,29 @@ class _XMLEncoder: Encoder {
     }
     
     private func converted(_ date: Date) throws -> String {
-        return dateFormatter.string(from: date) // TODO: use DateEncodingStrategy
+        switch options.dateEncodingStrategy {
+        case .iso8601:
+            return dateFormatter.string(from: date)
+        case .formatted(let formatter):
+            return formatter.string(from: date)
+        case .custom(let closure):
+            return try closure(self)
+        }
     }
     
     private func converted(_ url: URL) -> String {
         return url.absoluteString
     }
     
-    private func converted(_ data: Data) -> String {
-        return data.base64EncodedString() // TODO: use DataEncodingStrategy
+    private func converted(_ data: Data) throws -> String {
+        switch options.dataEncodingStrategy {
+        case .base64:
+            return data.base64EncodedString()
+        case .hex(let uppercase):
+            return data.hexEncodedString(uppercase: uppercase)
+        case .custom(let closure):
+            return try closure(self)
+        }
     }
     
     private func converted(_ bool: Bool) -> String {
