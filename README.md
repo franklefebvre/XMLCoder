@@ -17,7 +17,7 @@ CodableXML relies on the Swift Package Manager for integration in your projects.
 - add this line to the `dependencies` list in your `Package.swift` file:
 
 ```
-.package(url: "https://github.com/franklefebvre/XMLCoder.git", equal: "0.3.2"),
+.package(url: "https://github.com/franklefebvre/XMLCoder.git", equal: "0.3.3"),
 ```
 - add `XMLCoder` dependency to your target:
 
