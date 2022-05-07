@@ -164,14 +164,14 @@ class _XMLDecoder: Decoder {
                 let qualifiedKey = qualifiedName(forKey: key)
                 return elements[qualifiedKey] != nil
             case .attribute:
-                return attributes[key.stringValue] != nil
+                return attributes[attributeName(forKey: key)] != nil
             case .inline:
                 return decoder.storage.topContainer.currentTextNodeIndex < textNodes.count
             }
         }
         
         func qualifiedName(forKey key: CodingKey) -> String {
-            let localName = key.stringValue
+            let localName = encodedName(forKey: key, applyingStrategy: decoder.options.elementNameCodingStrategy)
             if let qualifiedKey = key as? XMLQualifiedKey, let namespace = qualifiedKey.namespace {
                 return "\(namespace):\(localName)"
             }
@@ -179,6 +179,14 @@ class _XMLDecoder: Decoder {
                 return "\(namespace):\(localName)"
             }
             return localName
+        }
+        
+        func attributeName(forKey key: CodingKey) -> String {
+            return encodedName(forKey: key, applyingStrategy: decoder.options.attributeNameCodingStrategy)
+        }
+        
+        func encodedName(forKey key: CodingKey, applyingStrategy codingStrategy: XMLCoder.KeyCodingStrategy?) -> String {
+            return codingStrategy?.encodedName(for: codingPath + [key]) ?? key.stringValue
         }
         
         func node(forKey key: Key) -> XMLNodeWrapper? {
@@ -190,7 +198,7 @@ class _XMLDecoder: Decoder {
                 }
                 return XMLNodeWrapper(node: node)
             case .attribute:
-                guard let node = attributes[key.stringValue] else {
+                guard let node = attributes[attributeName(forKey: key)] else {
                     return nil
                 }
                 return XMLNodeWrapper(node: node)
@@ -331,7 +339,7 @@ class _XMLDecoder: Decoder {
             self.decoder.codingPath.append(key)
             defer { self.decoder.codingPath.removeLast() }
             let string = try decode(String.self, forKey: key)
-            return try decoder.decodeValue(Data.self, from: string)
+            return try decoder.decodeValue(Data.self, from: string.filter { !$0.isWhitespace })
         }
         
         func decodeURL(forKey key: Key) throws -> URL {
@@ -655,7 +663,7 @@ class _XMLDecoder: Decoder {
             guard let string = try self.decodeStringAtCurrentIndex() else {
                 throw DecodingError.valueNotFound(Data.self, DecodingError.Context(codingPath: self.decoder.codingPath, debugDescription: "Expected \(Data.self) but found empty node instead."))
             }
-            let value = try decoder.decodeValue(Data.self, from: string)
+            let value = try decoder.decodeValue(Data.self, from: string.filter { !$0.isWhitespace })
             self.currentIndex += 1
             return value
         }
@@ -810,7 +818,7 @@ extension _XMLDecoder: SingleValueDecodingContainer {
     
     func decodeData() throws -> Data {
         let string = try self.decode(String.self)
-        return try decodeValue(Data.self, from: string)
+        return try decodeValue(Data.self, from: string.filter { !$0.isWhitespace })
     }
     
     func decodeURL() throws -> URL {
@@ -934,17 +942,37 @@ extension _XMLDecoder {
     }
     
     func decodeValue(_ type: Date.Type, from string: String) throws -> Date {
-        guard let value = dateFormatter.date(from: string) else { // TODO: use DateDecodingStrategy
-            throw DecodingError.valueNotFound(type, DecodingError.Context(codingPath: self.codingPath, debugDescription: "Could not decode \(type)."))
+        switch options.dateDecodingStrategy {
+        case .iso8601:
+            guard let value = dateFormatter.date(from: string) else {
+                throw DecodingError.valueNotFound(type, DecodingError.Context(codingPath: self.codingPath, debugDescription: "Could not decode \(type)."))
+            }
+            return value
+        case .formatted(let customDateFormatter):
+            guard let value = customDateFormatter.date(from: string) else {
+                throw DecodingError.valueNotFound(type, DecodingError.Context(codingPath: self.codingPath, debugDescription: "Could not decode \(type)."))
+            }
+            return value
+        case .custom(let closure):
+            return try closure(self)
         }
-        return value
     }
     
     func decodeValue(_ type: Data.Type, from string: String) throws -> Data {
-        guard let value = Data(base64Encoded: string) else { // TODO: use DataDecodingStrategy
-            throw DecodingError.valueNotFound(type, DecodingError.Context(codingPath: self.codingPath, debugDescription: "Could not decode \(type)."))
+        switch options.dataDecodingStrategy {
+        case .base64:
+            guard let value = Data(base64Encoded: string) else {
+                throw DecodingError.valueNotFound(type, DecodingError.Context(codingPath: self.codingPath, debugDescription: "Could not decode \(type)."))
+            }
+            return value
+        case .hex:
+            guard let value = Data(hexEncoded: string) else {
+                throw DecodingError.valueNotFound(type, DecodingError.Context(codingPath: self.codingPath, debugDescription: "Could not decode \(type)."))
+            }
+            return value
+        case .custom(let closure):
+            return try closure(self)
         }
-        return value
     }
     
     func decodeValue(_ type: URL.Type, from string: String) throws -> URL {

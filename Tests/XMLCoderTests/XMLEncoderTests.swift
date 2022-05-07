@@ -292,6 +292,34 @@ final class XMLEncoderTests: XCTestCase {
         XCTAssertEqual(result.substringWithXMLTag("root"), expected.substringWithXMLTag("root"))
     }
     
+    func testDateWithFormat() throws {
+        let date123 = Date(timeIntervalSince1970: 0.123)
+        let date456 = Date(timeIntervalSince1970: 0.456)
+        let date789 = Date(timeIntervalSince1970: 0.789)
+        let url = URL(string: "https://swift.org/")!
+        let value = DateURLStruct(date: date123, dates: [date456, date789], url: url, urls: [])
+        
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.timeZone = TimeZone(secondsFromGMT: 0)
+        formatter.dateFormat = "yyyy'-'MM'-'dd'T'HH':'mm':'ss'.'SSSXX"
+        
+        let encoder = XMLEncoder(documentRootTag: "root")
+        encoder.dateEncodingStrategy = .formatted(formatter)
+        let xml = try encoder.encode(value)
+        let result = String(data: xml.xmlData, encoding: .utf8)!
+        
+        let expected = """
+        <root>\
+        <date>1970-01-01T00:00:00.123Z</date>\
+        <dates><element>1970-01-01T00:00:00.456Z</element><element>1970-01-01T00:00:00.789Z</element></dates>\
+        <url>https://swift.org/</url>\
+        <urls></urls>\
+        </root>
+        """
+        XCTAssertEqual(result.substringWithXMLTag("root"), expected.substringWithXMLTag("root"))
+    }
+    
     func testBoolWithDefaultStrategy() {
         let value = BoolStruct(test: true, tests: [false, true, false])
         
@@ -336,6 +364,24 @@ final class XMLEncoderTests: XCTestCase {
         XCTAssertEqual(result.substringWithXMLTag("root"), expected.substringWithXMLTag("root"))
     }
     
+    func testDataToHex() throws {
+        let data = Data([0x42, 0x00, 0xff])
+        let value = DataStruct(element: data, elements: [data, data])
+        
+        let encoder = XMLEncoder(documentRootTag: "root")
+        encoder.dataEncodingStrategy = .hex(uppercase: false)
+        let xml = try encoder.encode(value)
+        let result = String(data: xml.xmlData, encoding: .utf8)!
+        
+        let expected = """
+        <root>\
+        <element>4200ff</element>\
+        <elements><element>4200ff</element><element>4200ff</element></elements>\
+        </root>
+        """
+        XCTAssertEqual(result.substringWithXMLTag("root"), expected.substringWithXMLTag("root"))
+    }
+    
     func testSubclass() {
         let value = Subclass()
         value.base = "base"
@@ -366,6 +412,102 @@ final class XMLEncoderTests: XCTestCase {
         XCTAssertEqual(result.substringWithXMLTag("another_root"), expected.substringWithXMLTag("another_root"))
     }
     
+    func testUppercaseKeys() throws {
+        func uppercaseKey(_ codingPath: [CodingKey]) -> String {
+            return codingPath.last?.stringValue.uppercased() ?? ""
+        }
+        
+        let value = BasicTestStruct(integer_element: 123, string_element: "hello", embedded_element: BasicEmbeddedStruct(some_element: "embedded"), string_array: ["one", "two", "three"], int_array: [1, 2, 3])
+
+        let encoder = XMLEncoder(documentRootTag: "ROOT")
+        encoder.keyCodingStrategy = .custom(uppercaseKey)
+        let xml = try encoder.encode(value)
+        let result = String(data: xml.xmlData, encoding: .utf8)!
+        
+        let expected = """
+        <ROOT>\
+        <INTEGER_ELEMENT>123</INTEGER_ELEMENT>\
+        <STRING_ELEMENT>hello</STRING_ELEMENT>\
+        <EMBEDDED_ELEMENT><SOME_ELEMENT>embedded</SOME_ELEMENT></EMBEDDED_ELEMENT>\
+        <STRING_ARRAY>\
+        <element>one</element>\
+        <element>two</element>\
+        <element>three</element>\
+        </STRING_ARRAY>\
+        <INT_ARRAY>\
+        <element>1</element>\
+        <element>2</element>\
+        <element>3</element>\
+        </INT_ARRAY>\
+        </ROOT>
+        """
+        
+        XCTAssertEqual(result.substringWithXMLTag("ROOT"), expected.substringWithXMLTag("ROOT"))
+    }
+    
+    func testUppercaseElements() throws {
+        func uppercaseKey(_ codingPath: [CodingKey]) -> String {
+            return codingPath.last?.stringValue.uppercased() ?? ""
+        }
+        
+        let value = AttributesStruct(element: "element_value", attribute: "attribute_value", inlineText: "inline_value", number: 42)
+        
+        let encoder = XMLEncoder(documentRootTag: "ROOT")
+        encoder.elementNameCodingStrategy = .custom(uppercaseKey)
+        let xml = try encoder.encode(value)
+        let result = String(data: xml.xmlData, encoding: .utf8)!
+        
+        let expected = """
+        <ROOT attribute="attribute_value">\
+        <ELEMENT>element_value</ELEMENT>inline_value<NUMBER>42</NUMBER>\
+        </ROOT>
+        """
+        
+        XCTAssertEqual(result.substringWithXMLTag("ROOT"), expected.substringWithXMLTag("ROOT"))
+    }
+    
+    func testUppercaseAttributes() throws {
+        func uppercaseKey(_ codingPath: [CodingKey]) -> String {
+            return codingPath.last?.stringValue.uppercased() ?? ""
+        }
+        
+        let value = AttributesStruct(element: "element_value", attribute: "attribute_value", inlineText: "inline_value", number: 42)
+        
+        let encoder = XMLEncoder(documentRootTag: "root")
+        encoder.attributeNameCodingStrategy = .custom(uppercaseKey)
+        let xml = try encoder.encode(value)
+        let result = String(data: xml.xmlData, encoding: .utf8)!
+        
+        let expected = """
+        <root ATTRIBUTE="attribute_value">\
+        <element>element_value</element>inline_value<number>42</number>\
+        </root>
+        """
+        
+        XCTAssertEqual(result.substringWithXMLTag("root"), expected.substringWithXMLTag("root"))
+    }
+    
+    func testUppercaseElementsAndAttributes() throws {
+        func uppercaseKey(_ codingPath: [CodingKey]) -> String {
+            return codingPath.last?.stringValue.uppercased() ?? ""
+        }
+        
+        let value = AttributesStruct(element: "element_value", attribute: "attribute_value", inlineText: "inline_value", number: 42)
+        
+        let encoder = XMLEncoder(documentRootTag: "ROOT")
+        encoder.keyCodingStrategy = .custom(uppercaseKey)
+        let xml = try encoder.encode(value)
+        let result = String(data: xml.xmlData, encoding: .utf8)!
+        
+        let expected = """
+        <ROOT ATTRIBUTE="attribute_value">\
+        <ELEMENT>element_value</ELEMENT>inline_value<NUMBER>42</NUMBER>\
+        </ROOT>
+        """
+        
+        XCTAssertEqual(result.substringWithXMLTag("ROOT"), expected.substringWithXMLTag("ROOT"))
+    }
+    
     static var allTests = [
         ("testEncodeBasicXML", testEncodeBasicXML),
         ("testAttributes", testAttributes),
@@ -381,10 +523,16 @@ final class XMLEncoderTests: XCTestCase {
         ("testNilAsEmpty", testNilAsEmpty),
         ("testFloatAndDouble", testFloatAndDouble),
         ("testDateAndURL", testDateAndURL),
+        ("testDateWithFormat", testDateWithFormat),
         ("testBoolWithDefaultStrategy", testBoolWithDefaultStrategy),
         ("testBoolWithCustomStrategy", testBoolWithCustomStrategy),
         ("testData", testData),
+        ("testDataToHex", testDataToHex),
         ("testSubclass", testSubclass),
         ("testDocumentRootTag", testDocumentRootTag),
+        ("testUppercaseKeys", testUppercaseKeys),
+        ("testUppercaseElements", testUppercaseElements),
+        ("testUppercaseAttributes", testUppercaseAttributes),
+        ("testUppercaseElementsAndAttributes", testUppercaseElementsAndAttributes),
     ]
 }
