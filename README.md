@@ -4,9 +4,9 @@ This package allows to encode/decode arbitrary XML documents through the Codable
 
 **Disclaimer:** I developed this package in order to use it in my own projects. I'm releasing it as open source with the hope it can be useful to other developers. While I designed this implementation to be reasonably generic, I don't claim it will fit all needs. However, if you find a bug or miss a feature, you are welcome to submit an issue or a pull request in the form of a failing test (or even better, a bug fix or working feature). I am open to all suggestions.
 
-**Supported Platforms:** macOS 10.12+, iOS 10+, Ubuntu 18.04.
+**Supported Platforms:** macOS 10.12+, Ubuntu 18.04, Ubuntu 20.04.
 
-**Supported Swift versions:** 5.1, 5.2.
+**Supported Swift versions:** 5.1 ... 5.6.
 
 ## Usage
 
@@ -17,7 +17,7 @@ CodableXML relies on the Swift Package Manager for integration in your projects.
 - add this line to the `dependencies` list in your `Package.swift` file:
 
 ```
-.package(url: "https://github.com/franklefebvre/XMLCoder.git", equal: "0.3.0"),
+.package(url: "https://github.com/franklefebvre/XMLCoder.git", equal: "0.3.3"),
 ```
 - add `XMLCoder` dependency to your target:
 
@@ -30,7 +30,7 @@ CodableXML relies on the Swift Package Manager for integration in your projects.
 
 ### Integration (Xcode 11+)
 
-You can add XMLCoder to an existing project by selecting File > Swift Packages > Add Package Dependency... and by providing the URLo f the repository: https://github.com/franklefebvre/XMLCoder. The current version is still a work in progress and some parts of the API may change, therefore I recommend to select "Up to Next Minor" or "Exact" in the Version menu.
+You can add XMLCoder to an existing project by selecting **File** > **Swift Packages** > **Add Package Dependency...** and by providing the URL of the repository: https://github.com/franklefebvre/XMLCoder. The current version is still a work in progress and some parts of the API may change, therefore I recommend to select "Up to Next Minor" or "Exact" in the Version menu.
 
 ### Input/Output
 
@@ -104,7 +104,7 @@ struct NamespaceStruct: Codable {
         case key2
         
         var namespace: String? {
-            switch(self) {
+            switch self {
             case .key1:
                 return "http://namespace.example.com"
             default:
@@ -160,12 +160,12 @@ struct AttributeStruct: Codable {
     var key1: String
     var key2: String
     
-    private enum CodingKeys: String, CodingKey, XMLNodeType {
+    private enum CodingKeys: String, CodingKey, XMLTypedKey {
         case key1
         case key2
         
         var nodeType: XMLNodeType {
-            switch(self) {
+            switch self {
             case .key1:
                 return .attribute
             case .key2:
@@ -244,15 +244,16 @@ By default `XMLDecoder` ignores the root tag in the XML document. However it is 
 
 ### Key transformations
 
-By default, keys in Swift types are encoded and decoded as XML tags with the same names, without transformation. However it is possible to change this behavior globally by using the `keyEncodingStrategy` attribute on `XMLEncoder`, and the `keyDecodingStrategy` attribute on `XMLDecoder`.
+By default, keys in Swift types are encoded and decoded as XML tags with the same names, without transformation. However it is possible to change this behavior globally by using the `keyCodingStrategy`, `elementNameCodingStrategy` and `attributeNameCodingStrategy` attributes on `XMLEncoder` and `XMLDecoder`.
+
+`keyCodingStrategy` defines the behavior for elements and attributes, unless overridden by `elementNameCodingStrategy` or `attributeNameCodingStrategy`.
 
 Possible settings are:
 
 - `useDefaultKeys`: this is the default behavior, as described above.
-- `convertToSnakeCase`, `convertFromSnakeCase`: allow to represent the keys in camelCase in the Swift types, and to have snake_case tags in the XML document.
-- `custom`: allows to provide a closure to implement the transformations.
+- `custom`: allows to provide a closure to implement the transformation. The closure always defines the transform from the coding keys to the XML element and/or attribute names. This allows to use the same function both for encoding and for decoding.
 
-Besides this global mechanism, it is still possible to convert between keys and tags on a case by base basis, e.g. by providing explicitly strings for the enum cases in the CodingKeys enum.
+Besides this global mechanism, it is still possible to convert between keys and tags on a case by base basis, e.g. by providing explicitly strings for the enum cases in the `CodingKeys` enum.
 
 ### Value conversions
 
@@ -273,19 +274,13 @@ Possible settings are:
 
 By default `false` is represented as `"0"`, and `true` is represented as `"1"`.
 
-*This is subject to change in a future implementation.*
-
 #### Data
 
-The current version encodes and decodes data as Base64 strings. No customization option is provided.
-
-*This is subject to change in a future implementation.*
+`XMLEncoder` exposes a `dataEncodingStrategy` property, and `XMLDecoder` exposes a symmetrical `dataDecodingStrategy` property. These properties allow to represent Data properties as Base64 strings (the default), hexadecimal strings, or to provide a custom implementation.
 
 #### Date
 
-The current version encodes and decodes dates as ISO 8601 strings, using the UTC time zone. No customization option is provided.
-
-*This is subject to change in a future implementation.*
+`XMLEncoder` exposes a `dateEncodingStrategy` property, and `XMLDecoder` exposes a symmetrical `dateDecodingStrategy` property. The default behavior is to encode and decode dates as ISO 8601 strings; other strategies allow to provide a `DateFormatter` or a custom implementation.
 
 #### URL
 

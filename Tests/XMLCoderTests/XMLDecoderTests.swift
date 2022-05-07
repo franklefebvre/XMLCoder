@@ -328,6 +328,33 @@ final class XMLDecoderTests: XCTestCase {
         XCTAssertEqual(result.urls, [url, url])
     }
     
+    func testDateWithFormat() throws {
+        let xml = """
+        <root>\
+        <date>1970-01-01T00:00:00.123Z</date>\
+        <dates><element>1970-01-01T00:00:00.456Z</element><element>1970-01-01T00:00:00.789Z</element></dates>\
+        <url>https://swift.org/</url>\
+        <urls/>\
+        </root>
+        """
+        let document = try XMLDocument(xmlString: xml)
+        
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.timeZone = TimeZone(secondsFromGMT: 0)
+        formatter.dateFormat = "yyyy'-'MM'-'dd'T'HH':'mm':'ss'.'SSSXX"
+        
+        let decoder = XMLDecoder()
+        decoder.dateDecodingStrategy = .formatted(formatter)
+        let result = try decoder.decode(DateURLStruct.self, from: document)
+        
+        let date123 = Date(timeIntervalSince1970: 0.123)
+        let date456 = Date(timeIntervalSince1970: 0.456)
+        let date789 = Date(timeIntervalSince1970: 0.789)
+        XCTAssertEqual(result.date, date123)
+        XCTAssertEqual(result.dates, [date456, date789])
+    }
+    
     func testBoolWithDefaultStrategy() throws {
         let xml = """
         <root>\
@@ -399,6 +426,42 @@ final class XMLDecoderTests: XCTestCase {
         XCTAssertEqual(result.elements, [data, data])
     }
     
+    func testDataWithWhitespace() throws {
+        let xml = """
+        <root>\
+        <element>
+        QgD/ </element>\
+        <elements><element>
+        QgD/
+        </element><element> Q g D / </element></elements>\
+        </root>
+        """
+        
+        let result = try Test.decode(DataStruct.self, from: xml)
+        
+        let data = Data([0x42, 0x00, 0xff])
+        XCTAssertEqual(result.element, data)
+        XCTAssertEqual(result.elements, [data, data])
+    }
+    
+    func testDataFromHex() throws {
+        let xml = """
+        <root>\
+        <element>4200ff</element>\
+        <elements><element>42 00 ff</element><element>4200FF</element></elements>\
+        </root>
+        """
+        let document = try XMLDocument(xmlString: xml)
+        
+        let decoder = XMLDecoder()
+        decoder.dataDecodingStrategy = .hex
+        let result = try decoder.decode(DataStruct.self, from: document)
+        
+        let data = Data([0x42, 0x00, 0xff])
+        XCTAssertEqual(result.element, data)
+        XCTAssertEqual(result.elements, [data, data])
+    }
+    
     func testSubclass() throws {
         let xml = """
         <root>\
@@ -455,6 +518,96 @@ final class XMLDecoderTests: XCTestCase {
         XCTAssertThrowsError(try decoder.decode(OneTagTestStruct.self, from: document))
     }
     
+    func testUppercaseKeys() throws {
+        func uppercaseKey(_ codingPath: [CodingKey]) -> String {
+            return codingPath.last?.stringValue.uppercased() ?? ""
+        }
+        
+        let xml = """
+        <ROOT>
+        <INTEGER_ELEMENT>123</INTEGER_ELEMENT>
+        <STRING_ELEMENT>hello</STRING_ELEMENT>
+        <EMBEDDED_ELEMENT><SOME_ELEMENT>embedded</SOME_ELEMENT></EMBEDDED_ELEMENT>
+        <STRING_ARRAY/>
+        <INT_ARRAY/>
+        </ROOT>
+        """
+        let document = try XMLDocument(xmlString: xml)
+        
+        let decoder = XMLDecoder()
+        decoder.keyCodingStrategy = .custom(uppercaseKey)
+        let result = try decoder.decode(BasicTestStruct.self, from: document)
+        
+        XCTAssertEqual(result.integer_element, 123)
+        XCTAssertEqual(result.string_element, "hello")
+    }
+    
+    func testUppercaseElements() throws {
+        func uppercaseKey(_ codingPath: [CodingKey]) -> String {
+            return codingPath.last?.stringValue.uppercased() ?? ""
+        }
+        
+        let xml = """
+        <ROOT attribute="attribute_value">
+        <ELEMENT>element_value</ELEMENT>inline_value<NUMBER>42</NUMBER>
+        </ROOT>
+        """
+        let document = try XMLDocument(xmlString: xml)
+        
+        let decoder = XMLDecoder()
+        decoder.elementNameCodingStrategy = .custom(uppercaseKey)
+        let result = try decoder.decode(AttributesStruct.self, from: document)
+        
+        XCTAssertEqual(result.element, "element_value")
+        XCTAssertEqual(result.attribute, "attribute_value")
+        XCTAssertEqual(result.inlineText, "inline_value")
+        XCTAssertEqual(result.number, 42)
+    }
+    
+    func testUppercaseAttributes() throws {
+        func uppercaseKey(_ codingPath: [CodingKey]) -> String {
+            return codingPath.last?.stringValue.uppercased() ?? ""
+        }
+        
+        let xml = """
+        <root ATTRIBUTE="attribute_value">
+        <element>element_value</element>inline_value<number>42</number>
+        </root>
+        """
+        let document = try XMLDocument(xmlString: xml)
+        
+        let decoder = XMLDecoder()
+        decoder.attributeNameCodingStrategy = .custom(uppercaseKey)
+        let result = try decoder.decode(AttributesStruct.self, from: document)
+        
+        XCTAssertEqual(result.element, "element_value")
+        XCTAssertEqual(result.attribute, "attribute_value")
+        XCTAssertEqual(result.inlineText, "inline_value")
+        XCTAssertEqual(result.number, 42)
+    }
+    
+    func testUppercaseElementsAndAttributes() throws {
+        func uppercaseKey(_ codingPath: [CodingKey]) -> String {
+            return codingPath.last?.stringValue.uppercased() ?? ""
+        }
+        
+        let xml = """
+        <ROOT ATTRIBUTE="attribute_value">
+        <ELEMENT>element_value</ELEMENT>inline_value<NUMBER>42</NUMBER>
+        </ROOT>
+        """
+        let document = try XMLDocument(xmlString: xml)
+        
+        let decoder = XMLDecoder()
+        decoder.keyCodingStrategy = .custom(uppercaseKey)
+        let result = try decoder.decode(AttributesStruct.self, from: document)
+        
+        XCTAssertEqual(result.element, "element_value")
+        XCTAssertEqual(result.attribute, "attribute_value")
+        XCTAssertEqual(result.inlineText, "inline_value")
+        XCTAssertEqual(result.number, 42)
+    }
+    
     static var allTests = [
         ("testDecodeBasicXML", testDecodeBasicXML),
         ("testAttributes", testAttributes),
@@ -474,14 +627,21 @@ final class XMLDecoderTests: XCTestCase {
         ("testNilAsEmpty", testNilAsEmpty),
         ("testFloatAndDouble", testFloatAndDouble),
         ("testDateAndURL", testDateAndURL),
+        ("testDateWithFormat", testDateWithFormat),
         ("testBoolWithDefaultStrategy", testBoolWithDefaultStrategy),
         ("testBoolWithCustomStrategy", testBoolWithCustomStrategy),
         ("testBoolError", testBoolError),
         ("testData", testData),
+        ("testDataWithWhitespace", testDataWithWhitespace),
+        ("testDataFromHex", testDataFromHex),
         ("testSubclass", testSubclass),
         ("testDocumentRootTagSuccess", testDocumentRootTagSuccess),
         ("testDocumentRootTagSuccessDefault", testDocumentRootTagSuccessDefault),
         ("testDocumentRootTagFailure", testDocumentRootTagFailure),
+        ("testUppercaseKeys", testUppercaseKeys),
+        ("testUppercaseElements", testUppercaseElements),
+        ("testUppercaseAttributes", testUppercaseAttributes),
+        ("testUppercaseElementsAndAttributes", testUppercaseElementsAndAttributes),
     ]
 }
 
