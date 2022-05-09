@@ -127,7 +127,7 @@ class _XMLEncoder: Encoder {
         func convertedName(forKey key: CodingKey) -> String {
             let codingStrategy: XMLCoder.KeyCodingStrategy?
             switch _nodeType(key) {
-            case .element, .array(_):
+            case .element, .array:
                 codingStrategy = encoder.options.elementNameCodingStrategy
             case .attribute:
                 codingStrategy = encoder.options.attributeNameCodingStrategy
@@ -212,12 +212,11 @@ class _XMLEncoder: Encoder {
             }
             let nodeType = _nodeType(key)
             switch nodeType {
-            case .array(_):
+            case .array:
                 let elements = try self.encoder.xmlElements(value)
                 for element in elements {
                     let node = XMLNode.element(withName: _converted(key), children: [element], attributes: container.attributes) as! XMLNode
                     self.container.append(node: node)
-
                 }
             default:
                 let element = try self.encoder.xmlElement(value, withName: _converted(key), nodeType: _nodeType(key))
@@ -356,16 +355,11 @@ class _XMLEncoder: Encoder {
             self.encoder = encoder
             self.codingPath = codingPath
             self.container = container
-            if let typedKey = codingPath.last as? XMLTypedKey {
-                switch typedKey.nodeType {
-                case .array(let elementName):
-                    self.elementName = elementName
-                default:
-                    self.elementName = nil
-                }
+            if codingPath.last is XMLTypedKey {
+                elementName = nil
             }
             else {
-                self.elementName = "element"
+                elementName = "element"
             }
         }
         
@@ -635,7 +629,7 @@ extension _XMLEncoder {
     
     fileprivate func xmlElement(_ value: String, withName name: String, nodeType: XMLNodeType = .element) -> XMLNode {
         switch nodeType {
-        case .element, .array(_):
+        case .element, .array:
             return XMLNode.element(withName: name, stringValue: value) as! XMLNode
         case .attribute:
             return XMLNode.attribute(withName: name, stringValue: value) as! XMLNode

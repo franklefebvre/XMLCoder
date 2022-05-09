@@ -15,7 +15,7 @@ public enum XMLNodeType {
     case element
     case attribute
     case inline
-    case array(String?)
+    case array
 }
 
 protocol XMLEncodingStorage {

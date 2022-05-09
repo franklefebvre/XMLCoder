@@ -136,7 +136,7 @@ struct ArrayStruct: Codable {
             case child
             
             var nodeType: XMLNodeType {
-                .array(nil)
+                .array
             }
         }
     }
@@ -229,7 +229,7 @@ struct ArrayFromElements: Codable, Equatable {
             case .single:
                 return .element
             case .multiple:
-                return .array(nil)
+                return .array
             }
         }
     }

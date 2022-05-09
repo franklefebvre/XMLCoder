@@ -160,7 +160,7 @@ class _XMLDecoder: Decoder {
         
         func contains(_ key: Key) -> Bool {
             switch _nodeType(key) {
-            case .element, .array(_):
+            case .element, .array:
                 let qualifiedKey = qualifiedName(forKey: key)
                 return elements[qualifiedKey] != nil
             case .attribute:
@@ -209,7 +209,7 @@ class _XMLDecoder: Decoder {
                 let node = textNodes[decoder.storage.topContainer.currentTextNodeIndex]
                 decoder.storage.locateNextTextNode()
                 return XMLNodeWrapper(node: node)
-            case .array(_):
+            case .array:
                 let qualifiedKey = qualifiedName(forKey: key)
                 return XMLNodeWrapper(node: container, elementName: qualifiedKey)
             }
