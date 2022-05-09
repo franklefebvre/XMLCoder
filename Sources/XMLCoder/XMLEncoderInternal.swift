@@ -210,8 +210,19 @@ class _XMLEncoder: Encoder {
             defer {
                 self.encoder.codingPath.removeLast()
             }
-            let element = try self.encoder.xmlElement(value, withName: _converted(key), nodeType: _nodeType(key))
-            self.container.append(node: element)
+            let nodeType = _nodeType(key)
+            switch nodeType {
+            case .array(_):
+                let elements = try self.encoder.xmlElements(value)
+                for element in elements {
+                    let node = XMLNode.element(withName: _converted(key), children: [element], attributes: container.attributes) as! XMLNode
+                    self.container.append(node: node)
+
+                }
+            default:
+                let element = try self.encoder.xmlElement(value, withName: _converted(key), nodeType: _nodeType(key))
+                self.container.append(node: element)
+            }
         }
         
         mutating func encodeIfPresent(_ value: Int?, forKey key: Key) throws {
@@ -350,7 +361,7 @@ class _XMLEncoder: Encoder {
                 case .array(let elementName):
                     self.elementName = elementName
                 default:
-                    self.elementName = "element"
+                    self.elementName = nil
                 }
             }
             else {

@@ -209,12 +209,9 @@ class _XMLDecoder: Decoder {
                 let node = textNodes[decoder.storage.topContainer.currentTextNodeIndex]
                 decoder.storage.locateNextTextNode()
                 return XMLNodeWrapper(node: node)
-            case .array(let elementName):
+            case .array(_):
                 let qualifiedKey = qualifiedName(forKey: key)
-                guard let node = elements[qualifiedKey] else {
-                    return nil
-                }
-                return XMLNodeWrapper(node: node, elementName: elementName)
+                return XMLNodeWrapper(node: container, elementName: qualifiedKey)
             }
         }
         

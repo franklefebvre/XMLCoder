@@ -127,19 +127,26 @@ struct NamespaceStruct: Codable {
 
 struct ArrayStruct: Codable {
     var string: String
-    var children: [String]
+    var children: ChildArray
+    
+    struct ChildArray: Codable {
+        var child: [String]
+        
+        private enum CodingKeys: String, CodingKey, XMLTypedKey {
+            case child
+            
+            var nodeType: XMLNodeType {
+                .array(nil)
+            }
+        }
+    }
     
     private enum CodingKeys: String, CodingKey, XMLTypedKey {
         case string
         case children
         
         var nodeType: XMLNodeType {
-            switch self {
-            case .children:
-                return .array("child")
-            default:
-                return .element
-            }
+            .element
         }
     }
 }
@@ -197,7 +204,7 @@ struct AlternatingRoot: Codable { // TODO: conform encoder root to TypedKey, so 
     private enum CodingKeys: String, CodingKey, XMLTypedKey {
         case array
         var nodeType: XMLNodeType {
-            return .array(nil)
+            .element
         }
     }
 }
@@ -205,6 +212,27 @@ struct AlternatingRoot: Codable { // TODO: conform encoder root to TypedKey, so 
 struct ArrayElement: Codable {
     let field1: String
     let field2: String
+}
+
+// Array elements as keys
+
+struct ArrayFromElements: Codable, Equatable {
+    var single: String
+    var multiple: [String]
+    
+    private enum CodingKeys: String, CodingKey, XMLTypedKey {
+        case single
+        case multiple
+        
+        var nodeType: XMLNodeType {
+            switch self {
+            case .single:
+                return .element
+            case .multiple:
+                return .array(nil)
+            }
+        }
+    }
 }
 
 // Optionals

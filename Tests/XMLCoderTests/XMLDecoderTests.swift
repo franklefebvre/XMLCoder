@@ -154,7 +154,7 @@ final class XMLDecoderTests: XCTestCase {
         
         let result = try Test.decode(ArrayStruct.self, from: xml)
         XCTAssertEqual(result.string, "some text")
-        XCTAssertEqual(result.children, ["one", "two", "three", "four"])
+        XCTAssertEqual(result.children.child, ["one", "two", "three", "four"])
     }
     
     func testArrayWithKeyedStringElementsUnexpectedKeys() throws {
@@ -167,7 +167,7 @@ final class XMLDecoderTests: XCTestCase {
         
         let result = try Test.decode(ArrayStruct.self, from: xml)
         XCTAssertEqual(result.string, "some text")
-        XCTAssertEqual(result.children, [])
+        XCTAssertEqual(result.children.child, [])
     }
     
     func testArrayWithAttributes() throws {
@@ -256,6 +256,23 @@ final class XMLDecoderTests: XCTestCase {
             ["31", "32", "33"],
             ["42"],
         ]
+        XCTAssertEqual(result, expected)
+    }
+    
+    func testArrayFromElements() throws {
+        let xml = """
+        <root>\
+        <single>zero</single>\
+        <multiple>one</multiple>\
+        <multiple>two</multiple>\
+        <multiple>three</multiple>\
+        </root>
+        """
+        
+        let result = try Test.decode(ArrayFromElements.self, from: xml)
+        
+        let expected = ArrayFromElements(single: "zero", multiple: ["one", "two", "three"])
+        
         XCTAssertEqual(result, expected)
     }
     

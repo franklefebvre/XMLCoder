@@ -101,7 +101,7 @@ final class XMLEncoderTests: XCTestCase {
     }
     
     func testArrayWithKeyedStringElements() {
-        let value = ArrayStruct(string: "some text", children: ["one", "two", "three", "four"])
+        let value = ArrayStruct(string: "some text", children: ArrayStruct.ChildArray(child: ["one", "two", "three", "four"]))
         
         let result = Test.xmlString(value)
         
@@ -116,7 +116,7 @@ final class XMLEncoderTests: XCTestCase {
         
         let jsonResult = Test.jsonString(value)
         let jsonExpected = """
-        {"children":["one","two","three","four"],"string":"some text"}
+        {"children":{"child":["one","two","three","four"]},"string":"some text"}
         """
         XCTAssertEqual(jsonResult, jsonExpected)
     }
@@ -229,6 +229,23 @@ final class XMLEncoderTests: XCTestCase {
         ["42"]]
         """
         XCTAssertEqual(jsonResult, jsonExpected)
+    }
+    
+    func testArrayFromElements() {
+        let value = ArrayFromElements(single: "zero", multiple: ["one", "two", "three"])
+        
+        let result = Test.xmlString(value)
+        
+        let expected = """
+        <root>\
+        <single>zero</single>\
+        <multiple>one</multiple>\
+        <multiple>two</multiple>\
+        <multiple>three</multiple>\
+        </root>
+        """
+        
+        XCTAssertEqual(result.substringWithXMLTag("root"), expected.substringWithXMLTag("root"))
     }
     
     func testNilAsMissing() {
