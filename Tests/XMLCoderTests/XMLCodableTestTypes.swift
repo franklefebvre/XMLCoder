@@ -209,9 +209,30 @@ struct AlternatingRoot: Codable { // TODO: conform encoder root to TypedKey, so 
     }
 }
 
+struct ArrayRoot: Codable {
+    let elements: [ArrayElement]
+    private enum CodingKeys: String, CodingKey, XMLTypedKey {
+        case elements = "elem"
+        var nodeType: XMLNodeType { .array }
+    }
+}
+
 struct ArrayElement: Codable {
     let field1: String
     let field2: String
+    let attr: String
+    
+    private enum CodingKeys: String, CodingKey, XMLTypedKey {
+        case field1, field2, attr
+        var nodeType: XMLNodeType {
+            switch self {
+            case .field1, .field2:
+                return .element
+            case .attr:
+                return .attribute
+            }
+        }
+    }
 }
 
 // Array elements as keys

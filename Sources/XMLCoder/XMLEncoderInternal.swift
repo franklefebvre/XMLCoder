@@ -215,8 +215,7 @@ class _XMLEncoder: Encoder {
             case .array:
                 let elements = try self.encoder.xmlElements(value)
                 for element in elements {
-                    let node = XMLNode.element(withName: _converted(key), children: [element], attributes: container.attributes) as! XMLNode
-                    self.container.append(node: node)
+                    self.container.append(node: element)
                 }
             default:
                 let element = try self.encoder.xmlElement(value, withName: _converted(key), nodeType: _nodeType(key))
@@ -356,7 +355,7 @@ class _XMLEncoder: Encoder {
             self.codingPath = codingPath
             self.container = container
             if codingPath.last is XMLTypedKey {
-                elementName = nil
+                elementName = codingPath.last!.stringValue
             }
             else {
                 elementName = "element"
