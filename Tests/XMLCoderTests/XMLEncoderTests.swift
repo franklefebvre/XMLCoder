@@ -152,8 +152,6 @@ final class XMLEncoderTests: XCTestCase {
         XCTAssertEqual(jsonResult, jsonExpected)
     }
     
-    // Disabled for now
-    #if false
     func testArrayWithAlternatingKeysAndValues() {
         let value = AlternatingRoot(array: [
             AlternatingArrayElement(key: AlternatingKeyElement(value: "one"), value: AlternatingValueElement(type: "string", value: "value 1")),
@@ -173,7 +171,6 @@ final class XMLEncoderTests: XCTestCase {
         
         XCTAssertEqual(result.substringWithXMLTag("root"), expected.substringWithXMLTag("root"))
     }
-    #endif
     
     func testArrayOfStructs() {
         let value = [
@@ -566,7 +563,7 @@ final class XMLEncoderTests: XCTestCase {
         ("testNamespacesWithOptions", testNamespacesWithOptions),
         ("testArrayWithKeyedStringElements", testArrayWithKeyedStringElements),
         ("testArrayWithAttributes", testArrayWithAttributes),
-//        ("testArrayWithAlternatingKeysAndValues", testArrayWithAlternatingKeysAndValues),
+        ("testArrayWithAlternatingKeysAndValues", testArrayWithAlternatingKeysAndValues),
         ("testArrayOfStructs", testArrayOfStructs),
         ("testArrayOfArrays", testArrayOfArrays),
         ("testNilAsMissing", testNilAsMissing),

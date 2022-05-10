@@ -204,7 +204,7 @@ struct AlternatingRoot: Codable { // TODO: conform encoder root to TypedKey, so 
     private enum CodingKeys: String, CodingKey, XMLTypedKey {
         case array
         var nodeType: XMLNodeType {
-            .element
+            .inline
         }
     }
 }

@@ -354,8 +354,8 @@ class _XMLEncoder: Encoder {
             self.encoder = encoder
             self.codingPath = codingPath
             self.container = container
-            if codingPath.last is XMLTypedKey {
-                elementName = codingPath.last!.stringValue
+            if let nodeType = (codingPath.last as? XMLTypedKey)?.nodeType {
+                elementName = nodeType == .inline ? nil : codingPath.last!.stringValue
             }
             else {
                 elementName = "element"
