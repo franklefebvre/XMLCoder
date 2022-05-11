@@ -430,10 +430,10 @@ class _XMLDecoder: Decoder {
             if let children = container.node.children {
                 self.elements = children.filter {
                     node in
-                    guard let name = node.name else {
+                    guard let element = node as? XMLElement, let qualifiedName = element.qualifiedName else {
                         return false
                     }
-                    return name == elementName
+                    return qualifiedName == elementName
                 }
             }
             else {
