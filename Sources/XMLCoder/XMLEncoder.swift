@@ -51,6 +51,11 @@ open class XMLEncoder {
     public struct BoolEncodingStrategy {
         let falseValue: String
         let trueValue: String
+        
+        public init(falseValue: String, trueValue: String) {
+            self.falseValue = falseValue
+            self.trueValue = trueValue
+        }
     }
 
     /// The strategy to use for encoding dates. Defaults to `.iso8601`.

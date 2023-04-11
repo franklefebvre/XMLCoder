@@ -50,6 +50,11 @@ open class XMLDecoder {
     public struct BoolDecodingStrategy {
         let falseValue: String
         let trueValue: String
+        
+        public init(falseValue: String, trueValue: String) {
+            self.falseValue = falseValue
+            self.trueValue = trueValue
+        }
     }
     
     /// The strategy to use in decoding dates. Defaults to `.iso8601`.
