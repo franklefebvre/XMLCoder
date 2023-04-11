@@ -101,7 +101,7 @@ final class XMLEncoderTests: XCTestCase {
     }
     
     func testArrayWithKeyedStringElements() {
-        let value = ArrayStruct(string: "some text", children: ["one", "two", "three", "four"])
+        let value = ArrayStruct(string: "some text", children: ArrayStruct.ChildArray(child: ["one", "two", "three", "four"]))
         
         let result = Test.xmlString(value)
         
@@ -116,7 +116,7 @@ final class XMLEncoderTests: XCTestCase {
         
         let jsonResult = Test.jsonString(value)
         let jsonExpected = """
-        {"children":["one","two","three","four"],"string":"some text"}
+        {"children":{"child":["one","two","three","four"]},"string":"some text"}
         """
         XCTAssertEqual(jsonResult, jsonExpected)
     }
@@ -174,18 +174,18 @@ final class XMLEncoderTests: XCTestCase {
     
     func testArrayOfStructs() {
         let value = [
-            ArrayElement(field1: "first.1", field2: "first.2"),
-            ArrayElement(field1: "second.1", field2: "second.2"),
-            ArrayElement(field1: "third.1", field2: "third.2"),
+            ArrayElement(field1: "first.1", field2: "first.2", attr: "first"),
+            ArrayElement(field1: "second.1", field2: "second.2", attr: "second"),
+            ArrayElement(field1: "third.1", field2: "third.2", attr: "third"),
             ]
         
         let result = Test.xmlString(value)
         
         let expected = """
         <root>\
-        <element><field1>first.1</field1><field2>first.2</field2></element>\
-        <element><field1>second.1</field1><field2>second.2</field2></element>\
-        <element><field1>third.1</field1><field2>third.2</field2></element>\
+        <element attr="first"><field1>first.1</field1><field2>first.2</field2></element>\
+        <element attr="second"><field1>second.1</field1><field2>second.2</field2></element>\
+        <element attr="third"><field1>third.1</field1><field2>third.2</field2></element>\
         </root>
         """
         
@@ -193,9 +193,9 @@ final class XMLEncoderTests: XCTestCase {
         
         let jsonResult = Test.jsonString(value)
         let jsonExpected = """
-        [{"field1":"first.1","field2":"first.2"},\
-        {"field1":"second.1","field2":"second.2"},\
-        {"field1":"third.1","field2":"third.2"}]
+        [{"attr":"first","field1":"first.1","field2":"first.2"},\
+        {"attr":"second","field1":"second.1","field2":"second.2"},\
+        {"attr":"third","field1":"third.1","field2":"third.2"}]
         """
         XCTAssertEqual(jsonResult, jsonExpected)
     }
@@ -227,6 +227,53 @@ final class XMLEncoderTests: XCTestCase {
         ["21","22","23"],\
         ["31","32","33"],\
         ["42"]]
+        """
+        XCTAssertEqual(jsonResult, jsonExpected)
+    }
+    
+    func testArrayFromElements() {
+        let value = ArrayFromElements(single: "zero", multiple: ["one", "two", "three"])
+        
+        let result = Test.xmlString(value)
+        
+        let expected = """
+        <root>\
+        <single>zero</single>\
+        <multiple>one</multiple>\
+        <multiple>two</multiple>\
+        <multiple>three</multiple>\
+        </root>
+        """
+        
+        XCTAssertEqual(result.substringWithXMLTag("root"), expected.substringWithXMLTag("root"))
+    }
+    
+    func testArrayOfStructsWithContainer() {
+        let value = ArrayRoot(elements: [
+            ArrayElement(field1: "first.1", field2: "first.2", attr: "first"),
+            ArrayElement(field1: "second.1", field2: "second.2", attr: "second"),
+            ArrayElement(field1: "third.1", field2: "third.2", attr: "third"),
+        ])
+        
+        let result = Test.xmlString(value)
+        
+        let expected = """
+        <root>\
+        <elem attr="first"><field1>first.1</field1><field2>first.2</field2></elem>\
+        <elem attr="second"><field1>second.1</field1><field2>second.2</field2></elem>\
+        <elem attr="third"><field1>third.1</field1><field2>third.2</field2></elem>\
+        </root>
+        """
+        
+        XCTAssertEqual(result.substringWithXMLTag("root"), expected.substringWithXMLTag("root"))
+        
+        let jsonResult = Test.jsonString(value)
+        let jsonExpected = """
+        {"elem":\
+        [{"attr":"first","field1":"first.1","field2":"first.2"},\
+        {"attr":"second","field1":"second.1","field2":"second.2"},\
+        {"attr":"third","field1":"third.1","field2":"third.2"}]\
+        }
         """
         XCTAssertEqual(jsonResult, jsonExpected)
     }

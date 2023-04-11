@@ -154,7 +154,7 @@ final class XMLDecoderTests: XCTestCase {
         
         let result = try Test.decode(ArrayStruct.self, from: xml)
         XCTAssertEqual(result.string, "some text")
-        XCTAssertEqual(result.children, ["one", "two", "three", "four"])
+        XCTAssertEqual(result.children.child, ["one", "two", "three", "four"])
     }
     
     func testArrayWithKeyedStringElementsUnexpectedKeys() throws {
@@ -167,7 +167,7 @@ final class XMLDecoderTests: XCTestCase {
         
         let result = try Test.decode(ArrayStruct.self, from: xml)
         XCTAssertEqual(result.string, "some text")
-        XCTAssertEqual(result.children, [])
+        XCTAssertEqual(result.children.child, [])
     }
     
     func testArrayWithAttributes() throws {
@@ -220,19 +220,22 @@ final class XMLDecoderTests: XCTestCase {
     func testArrayOfStructs() throws {
         let xml = """
         <root>\
-        <element><field1>first.1</field1><field2>first.2</field2></element>\
-        <element><field1>second.1</field1><field2>second.2</field2></element>\
-        <element><field1>third.1</field1><field2>third.2</field2></element>\
+        <element attr="first"><field1>first.1</field1><field2>first.2</field2></element>\
+        <element attr="second"><field1>second.1</field1><field2>second.2</field2></element>\
+        <element attr="third"><field1>third.1</field1><field2>third.2</field2></element>\
         </root>
         """
         
         let result = try Test.decode([ArrayElement].self, from: xml)
         XCTAssertEqual(result.count, 3)
         if (result.count == 3) {
+            XCTAssertEqual(result[0].attr, "first")
             XCTAssertEqual(result[0].field1, "first.1")
             XCTAssertEqual(result[0].field2, "first.2")
+            XCTAssertEqual(result[1].attr, "second")
             XCTAssertEqual(result[1].field1, "second.1")
             XCTAssertEqual(result[1].field2, "second.2")
+            XCTAssertEqual(result[2].attr, "third")
             XCTAssertEqual(result[2].field1, "third.1")
             XCTAssertEqual(result[2].field2, "third.2")
         }
@@ -257,6 +260,47 @@ final class XMLDecoderTests: XCTestCase {
             ["42"],
         ]
         XCTAssertEqual(result, expected)
+    }
+    
+    func testArrayFromElements() throws {
+        let xml = """
+        <root>\
+        <single>zero</single>\
+        <multiple>one</multiple>\
+        <multiple>two</multiple>\
+        <multiple>three</multiple>\
+        </root>
+        """
+        
+        let result = try Test.decode(ArrayFromElements.self, from: xml)
+        
+        let expected = ArrayFromElements(single: "zero", multiple: ["one", "two", "three"])
+        
+        XCTAssertEqual(result, expected)
+    }
+    
+    func testArrayOfStructsWithContainer() throws {
+        let xml = """
+        <root>\
+        <elem attr="first"><field1>first.1</field1><field2>first.2</field2></elem>\
+        <elem attr="second"><field1>second.1</field1><field2>second.2</field2></elem>\
+        <elem attr="third"><field1>third.1</field1><field2>third.2</field2></elem>\
+        </root>
+        """
+        
+        let result = try Test.decode(ArrayRoot.self, from: xml)
+        XCTAssertEqual(result.elements.count, 3)
+        if (result.elements.count == 3) {
+            XCTAssertEqual(result.elements[0].attr, "first")
+            XCTAssertEqual(result.elements[0].field1, "first.1")
+            XCTAssertEqual(result.elements[0].field2, "first.2")
+            XCTAssertEqual(result.elements[1].attr, "second")
+            XCTAssertEqual(result.elements[1].field1, "second.1")
+            XCTAssertEqual(result.elements[1].field2, "second.2")
+            XCTAssertEqual(result.elements[2].attr, "third")
+            XCTAssertEqual(result.elements[2].field1, "third.1")
+            XCTAssertEqual(result.elements[2].field2, "third.2")
+        }
     }
     
     func testNilAsMissing() throws {

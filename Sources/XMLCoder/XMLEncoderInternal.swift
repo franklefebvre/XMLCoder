@@ -127,7 +127,7 @@ class _XMLEncoder: Encoder {
         func convertedName(forKey key: CodingKey) -> String {
             let codingStrategy: XMLCoder.KeyCodingStrategy?
             switch _nodeType(key) {
-            case .element, .array(_):
+            case .element, .array:
                 codingStrategy = encoder.options.elementNameCodingStrategy
             case .attribute:
                 codingStrategy = encoder.options.attributeNameCodingStrategy
@@ -210,8 +210,17 @@ class _XMLEncoder: Encoder {
             defer {
                 self.encoder.codingPath.removeLast()
             }
-            let element = try self.encoder.xmlElement(value, withName: _converted(key), nodeType: _nodeType(key))
-            self.container.append(node: element)
+            let nodeType = _nodeType(key)
+            switch nodeType {
+            case .array:
+                let elements = try self.encoder.xmlElements(value)
+                for element in elements {
+                    self.container.append(node: element)
+                }
+            default:
+                let element = try self.encoder.xmlElement(value, withName: _converted(key), nodeType: _nodeType(key))
+                self.container.append(node: element)
+            }
         }
         
         mutating func encodeIfPresent(_ value: Int?, forKey key: Key) throws {
@@ -345,16 +354,11 @@ class _XMLEncoder: Encoder {
             self.encoder = encoder
             self.codingPath = codingPath
             self.container = container
-            if let typedKey = codingPath.last as? XMLTypedKey {
-                switch typedKey.nodeType {
-                case .array(let elementName):
-                    self.elementName = elementName
-                default:
-                    self.elementName = "element"
-                }
+            if let nodeType = (codingPath.last as? XMLTypedKey)?.nodeType {
+                elementName = nodeType == .inline ? nil : codingPath.last!.stringValue
             }
             else {
-                self.elementName = "element"
+                elementName = "element"
             }
         }
         
@@ -624,7 +628,7 @@ extension _XMLEncoder {
     
     fileprivate func xmlElement(_ value: String, withName name: String, nodeType: XMLNodeType = .element) -> XMLNode {
         switch nodeType {
-        case .element, .array(_):
+        case .element, .array:
             return XMLNode.element(withName: name, stringValue: value) as! XMLNode
         case .attribute:
             return XMLNode.attribute(withName: name, stringValue: value) as! XMLNode
